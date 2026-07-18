@@ -6,12 +6,12 @@
 const SETUPS = [
   { id: 'mission', name: 'Capped-Profit Mission Lab',
     blurb: 'Beloved, broke, and actually trying. The board answers to the mission — for now.',
-    stats: { money: 6, compute: 4, trust: 8, political: 6, human: 7, data: 4,
+    stats: { money: 7, compute: 4, trust: 8, political: 6, human: 7, data: 4,
              perceivedAlignment: 8, trueAlignment: 8, perceivedCapability: 4, trueCapability: 6 } },
   { id: 'venture', name: 'Venture Rocketship',
     blurb: 'Term sheets rain from the sky. The safety team reports to the growth team.',
     stats: { money: 9, compute: 8, trust: 5, political: 4, human: 6, data: 5,
-             perceivedAlignment: 5, trueAlignment: 3, perceivedCapability: 6, trueCapability: 6 } },
+             perceivedAlignment: 5, trueAlignment: 4, perceivedCapability: 6, trueCapability: 6 } },
   { id: 'bigtech', name: 'Big-Tech Partnership',
     blurb: 'Infinite data, deep pockets, and a parent company with opinions about everything.',
     stats: { money: 8, compute: 7, trust: 5, political: 2, human: 5, data: 8,
@@ -176,7 +176,7 @@ const SCENARIOS = [
       { label: 'Fund Slow Down!', requires: { money: 3 },
         results: [
           { text: 'Licensing requirements appear on the horizon. Pam\'s lawyers groan. Yours do too — but you saw the rules before anyone, because you wrote the first draft.',
-            effects: { money: -1, political: 1, perceivedAlignment: 2, rivals: -1, trueCapability: -1 } } ] },
+            effects: { money: -1, political: 1, perceivedAlignment: 1, rivals: -1, trueCapability: -1 } } ] },
       { label: 'Sit it out',
         results: [
           { text: 'You keep your money and your hands clean. The PACs fight each other to a draw. In Washington, absence is also a position — one nobody owes you favors for.',
@@ -189,7 +189,7 @@ const SCENARIOS = [
       { label: 'Cut the safety checks and ship what you have',
         results: [
           { text: 'You ship in nine days. The demo dazzles. Deep in the red-team queue, three flagged behaviors are marked "post-launch follow-up."',
-            effects: { trueCapability: 6, perceivedCapability: 2, trueAlignment: -2 } } ] },
+            effects: { trueCapability: 6, perceivedCapability: 2, trueAlignment: -1 } } ] },
       { label: 'Fake the evals and announce parity',
         results: [
           { chance: 0.35,
@@ -270,7 +270,7 @@ const SCENARIOS = [
       { label: 'The safety consortium',
         results: [
           { text: 'You commit to shared eval standards and third-party audits. Nothing about it is fast. All of it is real.',
-            effects: { perceivedAlignment: 2, trueAlignment: 1, trueCapability: -1 } } ] },
+            effects: { perceivedAlignment: 1, trueAlignment: 1, trueCapability: -1 } } ] },
       { label: 'The quiet meeting in Singapore',
         results: [
           { chance: 0.4,
