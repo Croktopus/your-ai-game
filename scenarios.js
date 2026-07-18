@@ -118,7 +118,7 @@ const SCENARIOS = [
       { label: 'Hire the beloved shitposter',
         results: [
           { text: 'Morale spikes. Recruiting spikes. The line between your research org and its Twitter presence thins alarmingly.',
-            effects: { human: 1, trust: 1, perceivedCapability: 1, trueCapability: 1 } } ] },
+            effects: { human: 1, trust: 1, perceivedCapability: 1, trueCapability: 1, money: -1 } } ] },
       { label: 'Hire the e/acc wunderkind',
         results: [
           { text: 'She ships a training-efficiency win in week two. She also files the safety review as "blocking" in week three. Helen starts cc-ing you on things.',
