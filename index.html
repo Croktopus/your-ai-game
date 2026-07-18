@@ -84,6 +84,16 @@
   .rev-row .track { height:8px; background:var(--bg); border:1px solid var(--line);
                     border-radius:4px; overflow:hidden; }
   .rev-row .fill { height:100%; }
+
+  /* annual report interstitial */
+  #report-panel { width:min(560px,100%); text-align:left; background:var(--panel);
+                  border:1px solid var(--line); border-radius:10px; padding:24px; margin-bottom:24px; }
+  #report-stats { width:100%; border-collapse:collapse; margin-bottom:18px; }
+  #report-stats td { padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  #report-stats td:last-child { text-align:right; color:var(--accent); font-family:Consolas,Menlo,monospace; }
+  #report-events { list-style:none; }
+  #report-events li { font-size:14px; color:var(--dim); padding:6px 0; border-bottom:1px dotted var(--line); }
+  #report-events li:last-child { border-bottom:none; }
 </style>
 </head>
 <body>
@@ -114,6 +124,15 @@
   </div>
 </div>
 
+<div id="report-screen" class="screen center" hidden>
+  <h1 id="report-title"></h1>
+  <div id="report-panel">
+    <table id="report-stats"></table>
+    <ul id="report-events"></ul>
+  </div>
+  <button class="next" id="report-continue">Continue</button>
+</div>
+
 <div id="ending-screen" class="screen center" hidden>
   <h1 id="ending-title"></h1>
   <p id="ending-text"></p>
@@ -128,6 +147,7 @@
 <script src="engine.js"></script>
 <script src="scenarios.js"></script>
 <script src="endings.js"></script>
+<script src="reports.js"></script>
 <script>
 const CONTENT = { scenarios: SCENARIOS, tripwires: TRIPWIRES, headlines: HEADLINES };
 const VISIBLE = [['money','Money'],['compute','Compute'],['trust','Trust'],
@@ -138,7 +158,7 @@ const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
 
 function show(id) {
-  for (const s of ['setup-screen','game-screen','ending-screen']) $(s).hidden = (s !== id);
+  for (const s of ['setup-screen','game-screen','report-screen','ending-screen']) $(s).hidden = (s !== id);
 }
 
 // ---- setup screen ----
@@ -237,8 +257,22 @@ function snapshot() {
 $('ov-next').onclick = () => {
   $('overlay').hidden = true;
   if (Engine.isOver(state)) return showEnding();
+  const report = REPORTS.find(r => r.afterTurn === state.turn);
+  if (report) return showReport(report);
   nextTurn();
 };
+
+// ---- annual report interstitial (does not consume a turn) ----
+function showReport(report) {
+  $('report-title').textContent = 'ANNUAL REPORT — ' + report.year;
+  const tbl = $('report-stats');
+  tbl.innerHTML = report.stats.map(row =>
+    '<tr><td>' + row.label + '</td><td>' + row.value + '</td></tr>').join('');
+  const ul = $('report-events');
+  ul.innerHTML = report.events(state).map(line => '<li>' + line + '</li>').join('');
+  show('report-screen');
+}
+$('report-continue').onclick = () => { show('game-screen'); nextTurn(); };
 
 // ---- HUD ----
 function renderHUD() {
