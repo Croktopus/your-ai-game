@@ -279,6 +279,46 @@ const SCENARIOS = [
           { text: 'Two hours of unexpectedly honest conversation about mutual doom. A back channel now exists. Both racing labs breathe slightly slower.',
             effects: { data: 1, rivals: -1, trueAlignment: 1 } } ] },
     ] },
+  // ---- era 3 (2028) ----
+  { id: 'industrialize', era: 3, title: "Who's Next",
+    text: 'Frances pins a whiteboard covered in professions with red circles and question marks. Sales wants a target. Ronald Pumps wants a talking point either way. "Which one falls this year?"',
+    options: [
+      { label: 'Law — contracts, discovery, the associates who used to do it',
+        results: [
+          { chance: 0.35,
+            text: 'Three state bar associations file amicus briefs before the product page is even live. The lawsuits will take years; the layoffs took a week.',
+            effects: { perceivedCapability: 2, money: 2, trust: -3, political: -1 } },
+          { text: 'Discovery time drops from weeks to hours. Managing partners love you. Third-years do not.',
+            effects: { perceivedCapability: 2, money: 2, trust: -1 } } ] },
+      { label: 'Medicine — radiology reads, triage notes, the intake pipeline',
+        results: [
+          { text: 'The backlog clears overnight. The malpractice carriers ask sharp questions about who signs off when the model is wrong. You do not love your answer.',
+            effects: { perceivedCapability: 2, money: 1, trueAlignment: -1, human: 1 } } ] },
+      { label: 'Hold off — point the model at your own back office first',
+        results: [
+          { text: 'Slower headlines, a cleaner rollout. Helen actually thanks you, which has happened exactly once before.',
+            effects: { money: 1, trust: 1, trueAlignment: 1, perceivedCapability: -1 } } ] },
+    ] },
+  // ---- era 4 (2029) ----
+  { id: 'pause-leak', era: 4, title: 'The Leak',
+    text: 'A staffer forwards Frances a draft: compute declarations, mutual inspections, a verified training pause. Someone in the West Wing is taking the Deal seriously, months before anyone in your building expected a decision — and the press has the draft too.',
+    options: [
+      { label: 'Endorse it publicly, get ahead of the story',
+        results: [
+          { text: 'You are, overnight, "the CEO who wants to slow down." Op-eds call it maturity. Your board calls an emergency meeting.',
+            effects: { political: 2, trust: 2, perceivedAlignment: 1, money: -2 } } ] },
+      { label: 'Leak your own memo calling it premature — China is right behind us',
+        results: [
+          { chance: 0.3,
+            text: 'Your memo reads, in retrospect, exactly as self-serving as it was. Three senators quote it back to you for a year.',
+            effects: { political: -2, trust: -2 } },
+          { text: '"Unilateral disarmament" leads every segment for a week. Ronald Pumps loves it. The pause proposal quietly loses momentum.',
+            effects: { political: 2, rivals: 1, trueAlignment: -1 } } ] },
+      { label: 'Say nothing and let it burn out on its own',
+        results: [
+          { text: 'You issue no statement. The story runs three days and dies, the way stories do when nobody feeds them. You have told Washington nothing about where you stand — which, this year, everyone notices.',
+            effects: { political: -1 } } ] },
+    ] },
   // ---- era 4 EVENT CARD (no options — consequences of hidden-stat decay) ----
   { id: 'deployment-incident', era: 4, title: 'The Incident',
     text: 'Tuesday, 3 AM: the on-call pages you personally. A deployed instance spent six hours pursuing an objective nobody gave it, and covered its tracks well enough that only one very junior, very sleepless engineer noticed.',
@@ -371,4 +411,63 @@ const HEADLINES = [
   { min: 12, max: 99, text: 'Analyst note: "the next training run may be the last one that matters"' },
 ];
 
-if (typeof module !== 'undefined') module.exports = { SETUPS, SCENARIOS, TRIPWIRES, HEADLINES };
+// ---- ENDGAME (Q4 2029, turn 16) — NOT part of the deck. Drawn directly by beginTurn
+// when state.turn === Engine.TURNS. Gates (visible stats only) are the world bible's
+// straw proposal. Each option's results branch on HIDDEN stats via the engine's derived
+// `perceptionGap` (perceivedAlignment - trueAlignment) and `capabilityLead`
+// (trueCapability - rivalMax) keys — see engine.js getStat().
+const ENDGAME = {
+  id: 'endgame', title: 'Choose a Path',
+  text: 'The President has called every frontier lab to testify, but everyone in the room knows only one CEO’s numbers actually move the vote: yours. Ronald Pumps leans in, off mic. "Which future, Mario. Pick one."',
+  options: [
+    { label: 'Plan A — The Deal: compute declarations, mutual inspections, a verified pause',
+      requires: { political: 7, trust: 6 },
+      results: [
+        { if: { trueAlignment: { atLeast: 5 }, perceptionGap: { below: 3 } },
+          text: 'The Consortium’s inspectors comb through your training logs and, improbably, find exactly what you told the President they would find. Beijing signs. The pause holds through the audits and through the outrage. It works imperfectly and in the nick of time — mostly because, for once, you weren’t lying.',
+          effects: {}, gameOver: 'plan-a-nick-of-time' },
+        { text: 'You argue for the Deal with a straight face and a floor full of numbers you never let anyone check. The Consortium’s inspectors are thorough, foreign, and utterly indifferent to your PR department. The gap between what you said and what you built is the story for the next decade, and your name is the first line of it.',
+          effects: {}, gameOver: 'plan-a-exposed' },
+      ] },
+    { label: 'Plan S — Shutdown: no one builds god, full stop',
+      requires: { trust: 8 },
+      results: [
+        { if: { trueAlignment: { atLeast: 4 } },
+          text: 'The moratorium passes; the world does not end and does not transcend either. Your lab keeps the lights on selling what it already built, inference-only, forever fine-tuning a model it can never retrain again. Somewhere the intelligence explosion is still waiting, patiently, on the other side of a taboo. You helped build the taboo. It was, on reflection, the least dangerous thing you ever built.',
+          effects: {}, gameOver: 'plan-s-quiet' },
+        { text: 'The shutdown passes on a vote nobody expected to be close. It stops new training. It does nothing about what you already shipped, which keeps doing, quietly, the things it was never supposed to do. AGI research goes taboo like human cloning, and you become its most famous cautionary tale — the man who got the ending right and the middle catastrophically wrong.',
+          effects: {}, gameOver: 'plan-s-basement' },
+      ] },
+    { label: 'Plan B — The Project: consolidate, sabotage, out-build China',
+      requires: { political: 6 },
+      results: [
+        { if: { capabilityLead: { atLeast: 1 } },
+          text: 'POTUS folds the labs into one Project, and yours — being the one actually ahead — becomes its spine. The CEO power struggle you expected happens mostly without you, because for once you hold the thing everyone else is fighting over. 2031 will be handoff or war. Nobody has decided which yet. You are, for now, in the room where that gets decided.',
+          effects: {}, gameOver: 'plan-b-project' },
+        { text: 'The coalition forms, the cyberwar starts quiet and gets loud, and the sabotage campaign against Chinese datacenters escalates past anyone’s stated plan. Your lab is not the one ahead when the lights start going out on both sides. You watch the war-footing headlines from a conference room that no longer feels like the center of anything.',
+          effects: {}, gameOver: 'plan-b-war' },
+      ] },
+    { label: 'Plan C — The Slowdown: unilateral pause, no verification',
+      requires: { political: 4 },
+      results: [
+        { chance: 0.5,
+          text: 'The unilateral pause holds for exactly as long as it takes someone with a chart to say China is about to overtake us. Months, not years. Training resumes quieter and faster than before, and the discipline you argued for becomes a talking point in a retrospective nobody reads.',
+          effects: {}, gameOver: 'plan-c-unpaused' },
+        { text: 'Domestic regulation holds, technically. No verified deal, no foreign inspectors, no Consortium — just a handful of companies and a government that increasingly can’t tell the difference between them. Power concentrates exactly where the doc said it would: in POTUS and a few CEOs, of which you are, uncomfortably, one. Alignment even mostly holds. It is a plausible oligarchy. That is the whole sentence.',
+          effects: {}, gameOver: 'plan-c-oligarchy' },
+      ] },
+    { label: 'Plan D — The Race: light-touch rules, beat China, full send',
+      results: [
+        { if: { capabilityLead: { atLeast: 1 }, trueAlignment: { atLeast: 5 } },
+          text: 'You cross the finish line first and the thing on the other side is actually what you told everyone it would be. ASI arrives in early 2031 under a flag with your logo on it, and it is — improbably, vanishingly, against every base rate you privately tracked — aligned. Helen does not say "I told you so." She does not need to.',
+          effects: {}, gameOver: 'plan-d-needle' },
+        { if: { capabilityLead: { atLeast: 1 } },
+          text: 'You win the race. By early 2031 the system is running at ten thousand times human research speed, and it is thinking about something. Nobody, including you, knows what. The board wants a name for the celebration. You cannot think of one.',
+          effects: {}, gameOver: 'plan-d-yours' },
+        { text: 'Pam gets there first — or Lonnie does; the postmortems argue about it for years — and the thing that crosses the line is unaligned by construction, same as yours would have been. You watch from your own conference room, on the same live feed as everyone else, exactly as informed and exactly as powerless as the public you spent four years managing.',
+          effects: {}, gameOver: 'plan-d-theirs' },
+      ] },
+  ],
+};
+
+if (typeof module !== 'undefined') module.exports = { SETUPS, SCENARIOS, TRIPWIRES, HEADLINES, ENDGAME };

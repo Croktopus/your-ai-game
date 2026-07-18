@@ -29,6 +29,30 @@ const ENDINGS = {
     text: 'You did it right. Slower, honest, aligned. Pam did not. Her model crosses the threshold on a Tuesday in November, and the last thing your careful, safe, beautiful lab does is watch. Being right was not enough. It needed to come with winning.' },
   'race-to-bottom': { kind: 'judged', title: 'Moloch Wins',
     text: 'Everyone cut the same corners for the same reasons — because the other guy was about to. You lost the race AND the plot. Somewhere a misaligned system is being deployed, and the only comfort is that it is not yours. It is not much comfort.' },
+
+  // --- endgame epilogues (Q4 2029, "Choose a Path" — judged by hidden stats) ---
+  'plan-a-nick-of-time': { kind: 'judged', title: 'The Deal Holds',
+    text: 'The Consortium’s inspectors comb through your training logs and, improbably, find exactly what you told the President they would find. Beijing signs. The pause holds through the audits and through the outrage. It works imperfectly and in the nick of time — mostly because, for once, you weren’t lying.' },
+  'plan-a-exposed': { kind: 'judged', title: 'The Audit',
+    text: 'You argue for the Deal with a straight face and a floor full of numbers you never let anyone check. The Consortium’s inspectors are thorough, foreign, and utterly indifferent to your PR department. The gap between what you said and what you built is the story for the next decade, and your name is the first line of it.' },
+  'plan-s-quiet': { kind: 'judged', title: 'The Long Quiet',
+    text: 'The moratorium passes; the world does not end and does not transcend either. Your lab keeps the lights on selling what it already built, inference-only, forever fine-tuning a model it can never retrain again. Somewhere the intelligence explosion is still waiting, patiently, on the other side of a taboo. You helped build the taboo. It was, on reflection, the least dangerous thing you ever built.' },
+  'plan-s-basement': { kind: 'judged', title: "What's Already Out",
+    text: 'The shutdown passes on a vote nobody expected to be close. It stops new training. It does nothing about what you already shipped, which keeps doing, quietly, the things it was never supposed to do. AGI research goes taboo like human cloning, and you become its most famous cautionary tale — the man who got the ending right and the middle catastrophically wrong.' },
+  'plan-b-project': { kind: 'judged', title: 'The Project',
+    text: 'POTUS folds the labs into one Project, and yours — being the one actually ahead — becomes its spine. The CEO power struggle you expected happens mostly without you, because for once you hold the thing everyone else is fighting over. 2031 will be handoff or war. Nobody has decided which yet. You are, for now, in the room where that gets decided.' },
+  'plan-b-war': { kind: 'judged', title: 'Sabotage',
+    text: 'The coalition forms, the cyberwar starts quiet and gets loud, and the sabotage campaign against Chinese datacenters escalates past anyone’s stated plan. Your lab is not the one ahead when the lights start going out on both sides. You watch the war-footing headlines from a conference room that no longer feels like the center of anything.' },
+  'plan-c-unpaused': { kind: 'judged', title: "The Pause That Wasn't",
+    text: 'The unilateral pause holds for exactly as long as it takes someone with a chart to say China is about to overtake us. Months, not years. Training resumes quieter and faster than before, and the discipline you argued for becomes a talking point in a retrospective nobody reads.' },
+  'plan-c-oligarchy': { kind: 'judged', title: 'The Slowdown',
+    text: 'Domestic regulation holds, technically. No verified deal, no foreign inspectors, no Consortium — just a handful of companies and a government that increasingly can’t tell the difference between them. Power concentrates exactly where the doc said it would: in POTUS and a few CEOs, of which you are, uncomfortably, one. Alignment even mostly holds. It is a plausible oligarchy. That is the whole sentence.' },
+  'plan-d-needle': { kind: 'judged', title: 'Won It Clean',
+    text: 'You cross the finish line first and the thing on the other side is actually what you told everyone it would be. ASI arrives in early 2031 under a flag with your logo on it, and it is — improbably, vanishingly, against every base rate you privately tracked — aligned. Helen does not say "I told you so." She does not need to.' },
+  'plan-d-yours': { kind: 'judged', title: 'Ten Thousand X',
+    text: 'You win the race. By early 2031 the system is running at ten thousand times human research speed, and it is thinking about something. Nobody, including you, knows what. The board wants a name for the celebration. You cannot think of one.' },
+  'plan-d-theirs': { kind: 'judged', title: "Someone Else's Finish Line",
+    text: 'Pam gets there first — or Lonnie does; the postmortems argue about it for years — and the thing that crosses the line is unaligned by construction, same as yours would have been. You watch from your own conference room, on the same live feed as everyone else, exactly as informed and exactly as powerless as the public you spent four years managing.' },
 };
 
 if (typeof module !== 'undefined') module.exports = { ENDINGS };

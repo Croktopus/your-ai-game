@@ -49,6 +49,10 @@ const Engine = (() => {
 
   function getStat(state, key) {
     if (key === 'rivalMax') return Math.max(...Object.values(state.rivals));
+    // perceptionGap / capabilityLead: derived hidden-stat comparisons, same pattern as
+    // rivalMax, used by the endgame's plan branches (e.g. "trueCapability > rivalMax").
+    if (key === 'perceptionGap') return state.stats.perceivedAlignment - state.stats.trueAlignment;
+    if (key === 'capabilityLead') return state.stats.trueCapability - Math.max(...Object.values(state.rivals));
     return state.stats[key];
   }
 
