@@ -1,6 +1,6 @@
 // engine.js — pure game logic. No DOM. Deterministic given (setup, seed, choices).
 const Engine = (() => {
-  const TURNS = 10;
+  const TURNS = 8;
   const BURN = 1;                    // money lost per turn tick
   const CLAMPS = {
     money: [0, 10], compute: [0, 10], trust: [0, 10],
@@ -18,7 +18,7 @@ const Engine = (() => {
     };
   }
 
-  function eraForTurn(turn) { return Math.ceil(turn * 4 / TURNS); }
+  function eraForTurn(turn) { return Math.ceil(turn / 2); }
 
   function shuffle(arr, rng) {
     const a = arr.slice();
@@ -75,6 +75,7 @@ const Engine = (() => {
           state.rivals[r] = Math.max(0, state.rivals[r] + delta);
         continue;
       }
+      if (!CLAMPS[key]) { console.warn('unknown effect key: ' + key); continue; }
       const [lo, hi] = CLAMPS[key];
       state.stats[key] = Math.min(hi, Math.max(lo, state.stats[key] + delta));
     }
@@ -112,7 +113,11 @@ const Engine = (() => {
     const tw = content.tripwires.find(t =>
       !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
     if (tw) { state.firedTripwires.push(tw.id); return tw; }
-    return state.queue.shift() || null;
+    const era = eraForTurn(state.turn);
+    let idx = state.queue.findIndex(s => s.era === era);
+    if (idx === -1) idx = state.queue.findIndex(s => s.era < era);
+    if (idx === -1) idx = 0;
+    return state.queue.splice(idx, 1)[0] || null;
   }
 
   function isOver(state) {

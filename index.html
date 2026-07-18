@@ -131,8 +131,7 @@
 const CONTENT = { scenarios: SCENARIOS, tripwires: TRIPWIRES, headlines: HEADLINES };
 const VISIBLE = [['money','Money'],['compute','Compute'],['trust','Trust'],
   ['political','Political'],['human','Talent'],['data','Data']];
-const DATES = ['Early 2026','Early 2026','Mid 2026','Late 2026','Late 2026',
-               'Early 2027','Mid 2027','Mid 2027','Late 2027','Late 2027'];
+const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027'];
 const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
 
@@ -182,6 +181,7 @@ function renderCard(card) {
     b.onclick = () => choose(card);   // resolveOption walks card.results directly
     el.appendChild(b);
     zone.appendChild(el);
+    lockCard(el);
     return;
   }
   for (const opt of card.options) {
@@ -196,6 +196,12 @@ function renderCard(card) {
     el.appendChild(b);
   }
   zone.appendChild(el);
+  lockCard(el);
+}
+
+function lockCard(el) {
+  el.style.pointerEvents = 'none';
+  setTimeout(() => { el.style.pointerEvents = ''; }, 350);
 }
 
 function choose(opt) {
@@ -228,7 +234,7 @@ function snapshot() {
 
 $('ov-next').onclick = () => {
   $('overlay').hidden = true;
-  if (state.ending || Engine.isOver(state)) return showEnding();
+  if (Engine.isOver(state)) return showEnding();
   nextTurn();
 };
 
@@ -248,8 +254,8 @@ function renderHUD() {
   }
   const st = document.createElement('span');
   st.id = 'stamp'; st.className = 'mono';
-  st.textContent = DATES[Math.min(state.turn, 10) - 1] + ' · turn ' + state.turn +
-    '/10 · seed ' + state.seed;
+  st.textContent = DATES[Math.min(state.turn, Engine.TURNS) - 1] + ' · turn ' + state.turn +
+    '/' + Engine.TURNS + ' · seed ' + state.seed;
   hb.appendChild(st);
 }
 

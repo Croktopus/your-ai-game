@@ -23,8 +23,8 @@ t('rng is deterministic for same seed', () => {
   ok(E.mulberry32(42)() !== E.mulberry32(43)(), 'different seeds differ');
 });
 
-t('eraForTurn maps 10 turns onto 4 eras', () => {
-  eq([1,2,3,4,5,6,7,8,9,10].map(E.eraForTurn), [1,1,2,2,2,3,3,4,4,4]);
+t('eraForTurn maps 8 turns onto 4 eras', () => {
+  eq([1,2,3,4,5,6,7,8].map(E.eraForTurn), [1,1,2,2,3,3,4,4]);
 });
 
 t('buildQueue orders by era, shuffles within era by seed', () => {
@@ -149,6 +149,17 @@ t('beginTurn: tripwire interrupts the deck, fires once', () => {
   ok(next.id === 'a' || next.id === 'b', 'draws from deck, does not re-fire tripwire');
 });
 
+t('beginTurn: era-aware draw prefers current era over older leftovers', () => {
+  const s = E.createRun(SETUP, 9, { scenarios: [] });
+  s.rng = () => 0.99;
+  const eraOne = SCEN('a', 1), eraFour = SCEN('d', 4);
+  s.queue = [eraOne, eraFour];
+  s.turn = 6; // beginTurn increments to 7 -> era 4
+  const card = E.beginTurn(s, CONTENT0);
+  eq(card.id, 'd', 'era-4 card drawn ahead of era-1 leftover');
+  eq(s.queue.map(x => x.id), ['a'], 'era-1 leftover remains in queue');
+});
+
 t('pickHeadline picks by rival band', () => {
   const s = mkState(); s.rng = () => 0.0;
   const hl = [{ min: 0, max: 8, text: 'low' }, { min: 8, max: 99, text: 'high' }];
@@ -161,7 +172,7 @@ t('pickHeadline picks by rival band', () => {
 t('isOver and judgeEnding matrix', () => {
   const s = mkState();
   ok(!E.isOver(s));
-  s.turn = 10; ok(E.isOver(s));
+  s.turn = E.TURNS; ok(E.isOver(s));
   s.rivals = { pam: 8, lonnie: 6 };
   s.stats.trueCapability = 9; s.stats.trueAlignment = 6; s.stats.perceivedAlignment = 7;
   eq(E.judgeEnding(s), 'needle');
@@ -216,7 +227,7 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
   }
   for (let era = 1; era <= 4; era++)
     ok(CONTENT.SCENARIOS.filter(s => s.era === era).length >= 2, 'era ' + era + ' needs 2+ scenarios');
-  ok(CONTENT.SCENARIOS.length >= 10, 'need a full 10-turn deck');
+  ok(CONTENT.SCENARIOS.length >= 8, 'need a full 8-turn deck');
 });
 
 if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endings', () => {
