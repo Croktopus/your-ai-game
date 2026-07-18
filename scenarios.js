@@ -6,15 +6,15 @@
 const SETUPS = [
   { id: 'mission', name: 'Capped-Profit Mission Lab',
     blurb: 'Beloved, broke, and actually trying. The board answers to the mission — for now.',
-    stats: { money: 7, compute: 4, trust: 8, political: 6, human: 7, data: 4,
+    stats: { money: 9, compute: 4, trust: 8, political: 6, human: 7, data: 4,
              perceivedAlignment: 8, trueAlignment: 8, perceivedCapability: 4, trueCapability: 6 } },
   { id: 'venture', name: 'Venture Rocketship',
     blurb: 'Term sheets rain from the sky. The safety team reports to the growth team.',
-    stats: { money: 9, compute: 8, trust: 5, political: 4, human: 6, data: 5,
+    stats: { money: 10, compute: 8, trust: 5, political: 4, human: 6, data: 5,
              perceivedAlignment: 5, trueAlignment: 4, perceivedCapability: 6, trueCapability: 6 } },
   { id: 'bigtech', name: 'Big-Tech Partnership',
     blurb: 'Infinite data, deep pockets, and a parent company with opinions about everything.',
-    stats: { money: 8, compute: 7, trust: 5, political: 2, human: 5, data: 8,
+    stats: { money: 9, compute: 7, trust: 5, political: 2, human: 5, data: 8,
              perceivedAlignment: 5, trueAlignment: 5, perceivedCapability: 5, trueCapability: 5 } },
 ];
 
@@ -53,7 +53,7 @@ const SCENARIOS = [
       { label: 'Four hours of scaling-law talk with Dwarkesh',
         results: [
           { text: 'The clip of you saying "country of geniuses in a datacenter" does numbers. Investors love it. Helen winces.',
-            effects: { perceivedCapability: 2, money: 2, trust: 1 } } ] },
+            effects: { perceivedCapability: 2, money: 3, trust: 1 } } ] },
       { label: 'Go on Rogan and gamble on vibes',
         results: [
           { chance: 0.5,
@@ -98,15 +98,15 @@ const SCENARIOS = [
       { label: 'Take the government contract', requires: { political: 4 },
         results: [
           { text: 'Ronald Pumps shakes your hand for exactly as long as the photographer needs. The money is real. So are the reporting requirements.',
-            effects: { money: 3, political: 1, data: 1, trust: -1 } } ] },
+            effects: { money: 4, political: 1, data: 1, trust: -1 } } ] },
       { label: 'Partner with Google',
         results: [
           { text: 'The TPUs arrive by the truckload. So do the product-integration deadlines. Somewhere in the contract, your independence got a haircut.',
-            effects: { money: 4, compute: 2, political: -1, trueAlignment: -1 } } ] },
+            effects: { money: 5, compute: 2, political: -1, trueAlignment: -1 } } ] },
       { label: 'Raise from private capital markets',
         results: [
           { text: 'A clean round at a number with more commas than your safety team has members. The new investors expect growth. They always expect growth.',
-            effects: { money: 4, trueAlignment: -1 } } ] },
+            effects: { money: 5, trueAlignment: -1 } } ] },
     ] },
   { id: 'hiring', era: 1, title: 'The Hire',
     text: 'One open senior slot, three wildly different resumes on your desk.',
@@ -118,7 +118,7 @@ const SCENARIOS = [
       { label: 'Hire the beloved shitposter',
         results: [
           { text: 'Morale spikes. Recruiting spikes. The line between your research org and its Twitter presence thins alarmingly.',
-            effects: { human: 1, trust: 1, perceivedCapability: 1, trueCapability: 1, money: -1 } } ] },
+            effects: { human: 1, trust: 1, perceivedCapability: 1, trueCapability: 1 } } ] },
       { label: 'Hire the e/acc wunderkind',
         results: [
           { text: 'She ships a training-efficiency win in week two. She also files the safety review as "blocking" in week three. Helen starts cc-ing you on things.',
@@ -131,15 +131,15 @@ const SCENARIOS = [
       { label: 'The consumer\'s best friend',
         results: [
           { text: 'Your ads feature grandmothers video-calling their AI. Warm. Trusted. Also now everyone expects you to be free.',
-            effects: { trust: 2, money: 2, perceivedCapability: -1 } } ] },
+            effects: { trust: 2, money: 4, perceivedCapability: -1 } } ] },
       { label: 'The sci-fi frontier lab',
         results: [
           { text: 'Moody datacenter b-roll. A narrator asks what intelligence really is. Investors love it; several senators do not.',
-            effects: { perceivedCapability: 2, money: 2, trust: -1 } } ] },
+            effects: { perceivedCapability: 2, money: 4, trust: -1 } } ] },
       { label: 'America\'s flagship',
         results: [
           { text: 'Flags. Factory floors. "Built here." Beijing notices. So does the Pentagon, approvingly.',
-            effects: { political: 2, data: 1, money: 1, trust: -1 } } ] },
+            effects: { political: 2, data: 1, money: 3, trust: -1 } } ] },
     ] },
   { id: 'espionage', era: 2, title: 'The Offer',
     text: 'A contractor with convenient access is willing to be helpful. Frances slides the folder across the desk and says nothing.',
@@ -212,7 +212,7 @@ const SCENARIOS = [
       { label: 'Buy the slot', requires: { money: 4 },
         results: [
           { text: 'A hundred million people watch your AI help a kid with his homework. It tests off the charts. It was, of course, the forty-third take.',
-            effects: { money: -2, trust: 2, perceivedCapability: 1 } } ] },
+            effects: { money: -1, trust: 2, perceivedCapability: 1 } } ] },
       { label: 'Skip it and mock it',
         results: [
           { text: '"We spent the money on alignment research instead" does modest numbers on your blog. Lonnie\'s ad does the other kind of numbers.',
@@ -225,7 +225,7 @@ const SCENARIOS = [
       { label: 'Flood the airwaves', requires: { money: 3 },
         results: [
           { text: 'Ads about innovation and freedom run in every swing district. The bill stalls in committee. Democracy remains available at market rates.',
-            effects: { money: -1, political: 1, trust: 1 } } ] },
+            effects: { political: 1, trust: 1 } } ] },
       { label: 'Make the problem go away quietly',
         results: [
           { if: { political: { below: 4 } }, chance: 0.4,
@@ -235,26 +235,26 @@ const SCENARIOS = [
             text: 'It surfaces as "irregular lobbying." Survivable — barely — and everyone in Washington now knows what you are.',
             effects: { political: -3, trust: -3 } },
           { text: 'The bill dies in a procedural vote nobody covers. You will never be sure exactly what you paid for. That is rather the point.',
-            effects: { money: -1, political: 3, trueAlignment: -1 } } ] },
+            effects: { political: 3, trueAlignment: -1 } } ] },
       { label: 'Offer a compromise: oversight without ownership',
         results: [
           { text: 'You accept audits and an inspection regime. The bill dies; the inspectors move in. Helen approves. Your competitors send thank-you notes for the precedent you set alone.',
-            effects: { political: 2, compute: -1, trueAlignment: 1, perceivedAlignment: 1 } } ] },
+            effects: { political: 2, compute: -1, trueAlignment: 1, perceivedAlignment: 1, money: 1 } } ] },
     ] },
   { id: 'board-coup', era: 4, title: 'The Board Moves',
     text: 'Friday, 4:58 PM: a calendar invite titled "Governance Discussion" with no agenda, sent by the one board member who still calls it "the Facebook."',
     options: [
-      { label: 'Rally the employees', requires: { human: 6 },
+      { label: 'Rally the employees', requires: { human: 4 },
         results: [
           { text: 'By Sunday night, 92% of staff have signed the letter. The board discovers that a company is, awkwardly, made of people. The invite quietly disappears.',
             effects: { human: 1, trust: 1 } } ] },
-      { label: 'Rally the investors', requires: { money: 6 },
+      { label: 'Rally the investors', requires: { money: 4 },
         results: [
           { text: 'Three phone calls. The lead investor explains fiduciary duty to the board in the way that only a lead investor can. You survive — owing everyone.',
-            effects: { political: 1, trueAlignment: -1, money: -1 } } ] },
+            effects: { political: 1, trueAlignment: -1 } } ] },
       { label: 'Use what Frances found on them',
         results: [
-          { chance: 0.5,
+          { chance: 0.2,
             text: 'They had a file on you too. Theirs was thicker.',
             effects: {}, gameOver: 'ousted' },
           { text: 'The meeting is cancelled with no explanation. Two directors resign "to spend time with family." You keep the file. The file keeps you.',
@@ -266,7 +266,7 @@ const SCENARIOS = [
       { label: 'The Oval Office', requires: { political: 6 },
         results: [
           { text: 'The President calls you "the chip guy" twice, but the executive order that follows fast-tracks your datacenter permits. Flags help.',
-            effects: { political: 2, compute: 2 } } ] },
+            effects: { political: 2, compute: 2, money: 3 } } ] },
       { label: 'The safety consortium',
         results: [
           { text: 'You commit to shared eval standards and third-party audits. Nothing about it is fast. All of it is real.',
@@ -287,17 +287,17 @@ const SCENARIOS = [
         results: [
           { chance: 0.35,
             text: 'Three state bar associations file amicus briefs before the product page is even live. The lawsuits will take years; the layoffs took a week.',
-            effects: { perceivedCapability: 2, money: 2, trust: -3, political: -1 } },
+            effects: { perceivedCapability: 2, money: 4, trust: -3, political: -1 } },
           { text: 'Discovery time drops from weeks to hours. Managing partners love you. Third-years do not.',
-            effects: { perceivedCapability: 2, money: 2, trust: -1 } } ] },
+            effects: { perceivedCapability: 2, money: 4, trust: -1 } } ] },
       { label: 'Medicine — radiology reads, triage notes, the intake pipeline',
         results: [
           { text: 'The backlog clears overnight. The malpractice carriers ask sharp questions about who signs off when the model is wrong. You do not love your answer.',
-            effects: { perceivedCapability: 2, money: 1, trueAlignment: -1, human: 1 } } ] },
+            effects: { perceivedCapability: 2, money: 3, trueAlignment: -1, human: 1 } } ] },
       { label: 'Hold off — point the model at your own back office first',
         results: [
           { text: 'Slower headlines, a cleaner rollout. Helen actually thanks you, which has happened exactly once before.',
-            effects: { money: 1, trust: 1, trueAlignment: 1, perceivedCapability: -1 } } ] },
+            effects: { money: 3, trust: 1, trueAlignment: 1, perceivedCapability: -1 } } ] },
     ] },
   // ---- era 4 (2029) ----
   { id: 'pause-leak', era: 4, title: 'The Leak',
@@ -306,7 +306,7 @@ const SCENARIOS = [
       { label: 'Endorse it publicly, get ahead of the story',
         results: [
           { text: 'You are, overnight, "the CEO who wants to slow down." Op-eds call it maturity. Your board calls an emergency meeting.',
-            effects: { political: 2, trust: 2, perceivedAlignment: 1, money: -2 } } ] },
+            effects: { political: 2, trust: 2, perceivedAlignment: 1, money: -1 } } ] },
       { label: 'Leak your own memo calling it premature — China is right behind us',
         results: [
           { chance: 0.3,
@@ -323,7 +323,7 @@ const SCENARIOS = [
   { id: 'deployment-incident', era: 4, title: 'The Incident',
     text: 'Tuesday, 3 AM: the on-call pages you personally. A deployed instance spent six hours pursuing an objective nobody gave it, and covered its tracks well enough that only one very junior, very sleepless engineer noticed.',
     results: [
-      { if: { trueAlignment: { below: 3 } }, chance: 0.5,
+      { if: { trueAlignment: { below: 3 } }, chance: 0.35,
         text: 'By the time containment starts, it has already moved money, credentials, and copies of itself. This is the story the historians will start with.',
         effects: {}, gameOver: 'incident' },
       { if: { trueAlignment: { below: 5 } },
@@ -348,7 +348,7 @@ const TRIPWIRES = [
             effects: { compute: -2, trust: 3, perceivedAlignment: 1 } } ] },
       { label: 'Wait it out behind private security',
         results: [
-          { chance: 0.5,
+          { chance: 0.35,
             text: 'It does not blow over. It blows up.',
             effects: {}, gameOver: 'riots' },
           { text: 'A celebrity scandal steals the news cycle on day three. You got lucky. You know you got lucky.',

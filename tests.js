@@ -191,9 +191,11 @@ t('isOver and judgeEnding matrix', () => {
 
 // Content validation — run only when real content is loadable (node or tests.html).
 let CONTENT = null;
-try { CONTENT = (typeof SCENARIOS !== 'undefined') ? { SCENARIOS, TRIPWIRES, HEADLINES } : require('./scenarios.js'); } catch (e) {}
+try { CONTENT = (typeof SCENARIOS !== 'undefined') ? { SCENARIOS, TRIPWIRES, HEADLINES, ENDGAME } : require('./scenarios.js'); } catch (e) {}
 let ENDINGS_MAP = null;
 try { ENDINGS_MAP = (typeof ENDINGS !== 'undefined') ? ENDINGS : require('./endings.js').ENDINGS; } catch (e) {}
+let REPORTS_ARR = null;
+try { REPORTS_ARR = (typeof REPORTS !== 'undefined') ? REPORTS : require('./reports.js').REPORTS; } catch (e) {}
 
 const STAT_KEYS = ['money','compute','trust','political','human','data',
   'perceivedAlignment','trueAlignment','perceivedCapability','trueCapability'];
@@ -228,13 +230,62 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
   }
   for (let era = 1; era <= 4; era++)
     ok(CONTENT.SCENARIOS.filter(s => s.era === era).length >= 2, 'era ' + era + ' needs 2+ scenarios');
-  ok(CONTENT.SCENARIOS.length >= 8, 'need a full 8-turn deck');
+  ok(CONTENT.SCENARIOS.length >= 15, 'need a full 15-turn deck (turn 16 is the endgame)');
+});
+
+if (CONTENT && ENDINGS_MAP && CONTENT.ENDGAME) t('endgame content validation', () => {
+  const eg = CONTENT.ENDGAME;
+  ok(Array.isArray(eg.options) && eg.options.length >= 1, 'endgame needs options');
+  ok(eg.options.some(o => !o.requires), 'endgame needs at least one ungated option (Plan D)');
+  for (const o of eg.options) {
+    if (o.requires) for (const k of Object.keys(o.requires))
+      ok(VISIBLE_KEYS.includes(k), 'endgame "' + o.label + '": gate on hidden stat ' + k);
+    const last = o.results[o.results.length - 1];
+    ok(!last.if && last.chance === undefined, 'endgame "' + o.label + '": last result must be unconditional');
+    for (const r of o.results) {
+      if (r.effects) for (const k of Object.keys(r.effects))
+        ok(STAT_KEYS.includes(k) || k === 'rivals', 'endgame "' + o.label + '": unknown effect key ' + k);
+      if (r.gameOver) ok(ENDINGS_MAP[r.gameOver], 'endgame "' + o.label + '": missing ending ' + r.gameOver);
+    }
+  }
+});
+
+if (REPORTS_ARR) t('REPORTS: 3 entries, afterTurn 4/8/12, events(state) is non-empty strings', () => {
+  eq(REPORTS_ARR.length, 3, 'expected 3 yearly reports');
+  eq(REPORTS_ARR.map(r => r.afterTurn), [4, 8, 12]);
+  const st = E.createRun(SETUP, 1, { scenarios: [] });
+  for (const r of REPORTS_ARR) {
+    ok(r.year, r.afterTurn + ': needs a year');
+    ok(Array.isArray(r.stats) && r.stats.length > 0, r.year + ': needs stats');
+    const lines = r.events(st);
+    ok(Array.isArray(lines) && lines.length > 0, r.year + ': events(state) must be non-empty');
+    for (const line of lines) ok(typeof line === 'string' && line.length > 0, r.year + ': event line must be a string');
+  }
+});
+
+t('beginTurn: endgame wins over a hot tripwire at turn 16', () => {
+  const tw = { id: 'tw-always', era: 0, trigger: { trust: { below: 100 } }, title: 'T', text: '',
+    options: [{ label: 'x', results: [{ text: 'x', effects: {} }] }] };
+  const endgame = { id: 'endgame', title: 'Choose a Path', text: '', options: [] };
+  const s = E.createRun(SETUP, 9, { scenarios: [] });
+  s.turn = 15; s.rng = () => 0.99;
+  const content = { scenarios: [], tripwires: [tw], headlines: [], endgame };
+  const card = E.beginTurn(s, content);
+  eq(s.turn, 16);
+  ok(card === endgame, 'endgame card returned, tripwire did not preempt it');
+});
+
+t('beginTurn: turn 16 with no content.endgame is null-safe', () => {
+  const s = E.createRun(SETUP, 9, { scenarios: [] });
+  s.turn = 15; s.rng = () => 0.99;
+  const content = { scenarios: [], tripwires: [], headlines: [] };
+  eq(E.beginTurn(s, content), null, 'no endgame content -> null, no crash');
 });
 
 if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endings', () => {
   const SETS = (typeof SETUPS !== 'undefined') ? SETUPS : require('./scenarios.js').SETUPS;
   const content = { scenarios: CONTENT.SCENARIOS, tripwires: CONTENT.TRIPWIRES,
-                    headlines: CONTENT.HEADLINES };
+                    headlines: CONTENT.HEADLINES, endgame: CONTENT.ENDGAME };
   const tally = {};
   for (const setup of SETS) for (let seed = 1; seed <= 50; seed++) {
     const st = E.createRun(setup, seed, content);
@@ -253,6 +304,22 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
     tally[end] = (tally[end] || 0) + 1;
   }
   console.log('  ending distribution:', JSON.stringify(tally));
+
+  const TOTAL = 150; // 3 setups * 50 seeds
+  const DEATH_IDS = new Set(['bankrupt','riots','ousted','shutdown','corruption',
+    'espionage-scandal','incident','coverup-collapse']);
+  let deaths = 0, trueWins = 0;
+  const planEndingsSeen = new Set();
+  for (const [id, count] of Object.entries(tally)) {
+    ok(count / TOTAL <= 0.5, 'no single ending should exceed 50% of runs: ' + id + ' = ' + count);
+    if (DEATH_IDS.has(id)) deaths += count;
+    if (id === 'plan-d-needle' || id === 'plan-a-nick-of-time') trueWins += count;
+    if (id.indexOf('plan-') === 0) planEndingsSeen.add(id);
+  }
+  const deathPct = deaths / TOTAL, winPct = trueWins / TOTAL;
+  ok(deathPct >= 0.20 && deathPct <= 0.45, 'deaths should be 20-45% of runs, got ' + (deathPct * 100).toFixed(1) + '%');
+  ok(winPct >= 0.01 && winPct <= 0.08, 'true wins (plan-d-needle + plan-a-nick-of-time) should be 1-8%, got ' + (winPct * 100).toFixed(1) + '%');
+  ok(planEndingsSeen.size >= 4, 'expected at least 4 distinct plan endings, got ' + planEndingsSeen.size + ': ' + [...planEndingsSeen].join(','));
 });
 
 console.log(pass + ' passed, ' + fail + ' failed');
