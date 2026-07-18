@@ -47,239 +47,212 @@ const SETUPS = [
 // -------------------------------------------------------------------------------
 
 const SCENARIOS = [
-  { id: 'podcast', year: 2026, title: 'The Podcast Circuit',
-    text: 'Every mic in America wants Mario. Frances says pick one; the others will notice being snubbed.',
-    options: [
-      { label: 'Four hours of scaling-law talk with Dwarkesh',
-        results: [
-          { text: 'The clip of you saying "country of geniuses in a datacenter" does numbers. Investors love it. Helen winces.',
-            effects: { perceivedCapability: 2, money: 3, trust: 1 } } ] },
-      { label: 'Go on Rogan and gamble on vibes',
-        results: [
-          { chance: 0.5,
-            text: 'Three hours in, you speculate about digitizing dead relatives. The clip haunts you for months.',
-            effects: { trust: -2, political: -1 } },
-          { text: 'You are charming and normal for three straight hours. Middle America decides you seem fine.',
-            effects: { trust: 3 } } ] },
-      { label: 'A sober hour with Ezra Klein about governance',
-        results: [
-          { text: 'Thoughtful, careful, precise. Policy people quote you. Your engagement metrics are a rounding error.',
-            effects: { perceivedAlignment: 1, political: 2 } } ] },
-    ] },
-  { id: 'cyberattack', year: 2028, title: 'Breach',
-    text: 'Someone exfiltrated training checkpoints overnight. Frances has the logs. Nobody else knows yet.',
-    options: [
-      { label: 'Disclose everything publicly',
-        results: [
-          { text: 'The honesty plays well in Washington, less well with customers who now know your weights walked out the door.',
-            effects: { trust: 1, political: 2, perceivedCapability: -1 } } ] },
-      { label: 'Cover it up',
-        results: [
-          { if: { trust: { below: 3 } }, chance: 0.4,
-            text: 'It leaks. For a public already primed to distrust you, this is the end of the story.',
-            effects: { trust: -5 }, gameOver: 'coverup-collapse' },
-          { chance: 0.4,
-            text: 'It leaks anyway. The word "coverup" trends for a week.',
-            effects: { trust: -3, political: -1 } },
-          { text: 'It holds. Frances shreds the logs. You tell yourself it was for the mission.',
-            effects: { trueAlignment: -1 } } ] },
-      { label: 'Retaliate through back channels', requires: { compute: 6 },
-        results: [
-          { chance: 0.4,
-            text: 'Your counter-op gets attributed within a week. Congress uses the word "vigilante".',
-            effects: { political: -2, trust: -2 } },
-          { text: 'Your team walks their infrastructure right back. You now know exactly what Pam has. So does no one else.',
-            effects: { data: 2, rivals: -1, trueCapability: 2 } } ] },
-    ] },
   // ---- 2026 ----
-  { id: 'seek-funding', year: 2026, title: 'The Raise',
-    text: 'Runway is a countable number of months. Everyone wants to give you money; everyone wants something back.',
+  { id: 'chinese-agi-surprise', year: 2026, title: 'The Six-Day Surprise',
+    text: "A Chinese lab ships a model you thought was six months out — it landed six days ago, and the benchmarks land somewhere around what you'd call GPT-5.6.",
     options: [
-      { label: 'Take the government contract', requires: { political: 4 },
+      { label: 'Lobby Ronald Pumps for GPU export controls',
         results: [
-          { text: 'Ronald Pumps shakes your hand for exactly as long as the photographer needs. The money is real. So are the reporting requirements.',
-            effects: { money: 4, political: 1, data: 1, trust: -1 } } ] },
-      { label: 'Partner with Google',
+          { text: 'The bill moves fast — non-nationals lose GPU access within the month. Ronald Pumps calls it "a national security win." The op-eds call it something closer to protectionism.',
+            effects: { political: 1, trust: -1 } } ] },
+      { label: 'Coerce a break-in at the Chinese lab',
         results: [
-          { text: 'The TPUs arrive by the truckload. So do the product-integration deadlines. Somewhere in the contract, your independence got a haircut.',
-            effects: { money: 5, compute: 2, political: -1, trueAlignment: -1 } } ] },
-      { label: 'Raise from private capital markets',
+          { text: "Your fixer gets the weights and the training recipe both. An investigative reporter gets the security footage. The head start is real, and the internal chaos over the leak buys you a few quiet months where their own roadmap slips.",
+            effects: { money: 2, trueCapability: 5, rivals: -3, trust: -1, political: -1, human: -1 } } ] },
+      { label: 'Push the team through a brutal crunch',
         results: [
-          { text: 'A clean round at a number with more commas than your safety team has members. The new investors expect growth. They always expect growth.',
-            effects: { money: 5, trueAlignment: -1 } } ] },
+          { text: 'Free food, mandatory-optional weekends, a bonus pool for anyone still standing in March. The gap closes a little. So does something in the team that does not reopen easily.',
+            effects: { trueCapability: 2, human: -1, money: -1 } } ] },
+      { label: 'Expand hiring across every vertical at once',
+        results: [
+          { text: 'You triple headcount in a quarter. The org chart looks like a fractal. Rent in a two-mile radius of your office doubles, and the local news knows exactly whose fault that is.',
+            effects: { human: 1, trust: -1 } } ] },
+      { label: 'Stand up an internal anti-distillation task force',
+        results: [
+          { text: 'A dedicated team hunts down unauthorized API scrapers and copycats, quietly slowing everyone downstream of you. It is expensive, invasive, and not something you can put in a press release.',
+            effects: { money: -1, trust: -1, rivals: -3 } } ] },
     ] },
-  { id: 'hiring', year: 2026, title: 'The Hire',
-    text: 'One open senior slot, three wildly different resumes on your desk.',
+  { id: 'podcast-tour', year: 2026, title: 'The Podcast Circuit',
+    text: "Your Chief of PR has booked three appearances and is only letting you pick one. All three hosts are already teasing it.",
     options: [
-      { label: 'Hire the famous doomer', requires: { trust: 6 },
+      { label: "Marcus Matel — go deep on interpretability, admit you're worried about ASI",
         results: [
-          { text: 'He accepts, on the condition he can say "I told you so" in the postmortem. Your safety culture gets real teeth. Your ship dates get real slow.',
-            effects: { trueAlignment: 2, perceivedAlignment: 1, human: 1, trueCapability: -1 } } ] },
-      { label: 'Hire the beloved shitposter',
+          { text: "Four hours of chain-of-thought visualizations and an unscripted admission that keeps you up some nights. Researchers respect it. The market takes it as a confession.",
+            effects: { human: 1, trust: -1 } } ] },
+      { label: 'Moe Shmogan — talk peptides, workouts, tease the next model',
         results: [
-          { text: 'Morale spikes. Recruiting spikes. The line between your research org and its Twitter presence thins alarmingly.',
-            effects: { human: 1, trust: 1, perceivedCapability: 1, trueCapability: 1 } } ] },
-      { label: 'Hire the e/acc wunderkind',
+          { text: 'You bench press through the cold open and drop one deniable hint about the next release. Clips travel. Nobody who matters takes the interview seriously, which somehow does not stop it from working.',
+            effects: { money: 1, trust: -1 } } ] },
+      { label: 'Ray Medhi — get personal about how you relate to your own AI',
         results: [
-          { text: 'She ships a training-efficiency win in week two. She also files the safety review as "blocking" in week three. Helen starts cc-ing you on things.',
-            effects: { trueCapability: 4, human: 1, trueAlignment: -1 } } ] },
+          { text: "You talk, unusually candidly, about texting the model at 2 a.m. when you can't sleep. It plays as human. Humans, it turns out, are hard to monetize directly.",
+            effects: { trust: 1, money: -1 } } ] },
+    ] },
+  { id: 'wet-lab-claudia', year: 2026, title: 'Claudia Goes to the Wet Lab',
+    text: 'Misanthropic Inc. wants Claudia running point on drug discovery — partnered with university labs and drugmakers like EL, hunting cures at a pace no postdoc could match.',
+    results: [
+      { chance: 0.05,
+        text: 'Someone reproduces the pipeline in a garage with a benchtop synthesizer and no biosafety training whatsoever. The CDC calls it Marburg. History calls it the last thing your lab is ever known for.',
+        effects: {}, gameOver: 'bioweapon-extinction' },
+      { chance: 0.3,
+        text: 'Six months and four clinical failures later, none of it works. The compounds looked perfect in silico and fell apart in a body. Your drugmaker partners start returning calls slower.',
+        effects: { trust: -1, money: -1 } },
+      { chance: 0.5,
+        text: "Biohackers online are peptide-maxing off Claudia's protocols and, unnervingly, getting results. Personalized medicine arrives a decade early, off the books, and doctors' offices go quiet.",
+        effects: { trust: 2, money: 2 } },
+      { text: "A researcher on the project uses the tooling off-label to save his own dying dog. He posts about it. It is somehow the most effective marketing your lab has ever done.",
+        effects: { trust: 1, money: 2 } } ] },
+  { id: 'superbowl-jab', year: 2026, title: "Someone Else's Super Bowl Ad",
+    text: 'A credible leak: a rival is buying Super Bowl airtime to launch a new hardware gadget and crown themselves the face of AI, live, in front of a hundred million people.',
+    options: [
+      { label: 'Seed a secret-message counter-ad with a free premium unlock',
+        results: [
+          { text: 'Eagle-eyed viewers crack the code by halftime and flood your signup page. The internet loves a puzzle, and three tech blogs call it derivative of the rival campaign it was riffing on.',
+            effects: { trust: 1, political: -1 } } ] },
+      { label: 'Fire off a press release with a pointed jab',
+        results: [
+          { text: '"We\'ll let the benchmarks do the talking" reads as either confident or thin-skinned depending who you ask. Mostly it reads as petty in three Beltway newsletters.',
+            effects: { trust: 1, political: -1 } } ] },
+      { label: 'Buy a billboard suite to display a message during the broadcast',
+        results: [
+          { text: "A single line of text, timed perfectly against the rival's ad break, on every screen in the stadium. It costs a fortune and photographs beautifully.",
+            effects: { trust: 1 } } ] },
+      { label: 'Ignore it and keep shipping',
+        results: [
+          { text: 'You spend Sunday in a product review instead of a green room. The actual roadmap moves forward. Nobody outside the building notices, which is sort of the problem.',
+            effects: { trueCapability: 1, perceivedCapability: -1 } } ] },
+    ] },
+  { id: 'pam-merger-offer', year: 2026, title: 'Pam Calls',
+    text: "Pam calls you directly. Combined, your labs would control sixty percent of frontier compute and talent. She doesn't say she'd be CEO of the result. She doesn't have to.",
+    options: [
+      { label: 'Accept the merger',
+        results: [
+          { text: "The paperwork closes in six weeks. The combined lab is a juggernaut. Somewhere in the integration, Pam's safety team quietly starts reporting to her growth team, and yours goes along with it because there is, structurally, no longer a choice.",
+            effects: { money: 3, compute: 2, political: 1, trueAlignment: -2 } } ] },
+      { label: 'Decline, then leak that she called',
+        results: [
+          { text: '"Pam tried to buy her way out of the race" runs everywhere by morning. It plays as a win for independence. Lonnie reads it as a sign you\'re both scared, and steps on the gas.',
+            effects: { trust: 2, political: -1, rivals: 1 } } ] },
+      { label: 'Decline, propose a compute-sharing pact instead',
+        results: [
+          { text: "Neither of you gets everything. Both of you get visibility into what the other is training on, which turns out to be worth more than the compute itself.",
+            effects: { compute: 1, political: 1, trust: -1 } } ] },
+      { label: 'Launch a hostile bid to buy her instead', requires: { money: 5 },
+        results: [
+          { text: "The tender offer is public within hours and radioactive within days. Antitrust lawyers on three continents update their calendars. You don't get the company. You do get half her board.",
+            effects: { money: -3, political: -2, human: 2 } } ] },
+    ] },
+  { id: 'california-sb', year: 2026, title: 'The Safety Framework Bill',
+    text: 'California wants large models to publish catastrophic-risk assessments, protect whistleblowers, and report incidents — or explain to the Attorney General why not.',
+    options: [
+      { label: 'Reincorporate in Texas',
+        results: [
+          { text: 'The move is fast, cheap, and reads exactly as craven as it is. You save on taxes and power. You lose the Sacramento relationships you spent two years building.',
+            effects: { political: -1, human: -1, money: 2 } } ] },
+      { label: 'Stay and comply',
+        results: [
+          { text: 'The assessments take a full quarter to write and cost more than anyone budgeted. Regulators cite you, approvingly, as the model other companies should follow.',
+            effects: { political: 1, trust: 1 } } ] },
+      { label: 'Fund a repeal proposition and lobby hard',
+        results: [
+          { chance: 0.25,
+            text: "A staffer's texts about \"handling\" a state senator leak mid-campaign. The proposition dies and takes some of your credibility with it.",
+            effects: { political: -3, trust: -3, money: -2 } },
+          { text: 'The proposition qualifies for the ballot and the bill quietly loses momentum in committee before anyone even votes. Nobody outside your government-affairs team knows how much that cost.',
+            effects: { political: -1, trust: -1 } } ] },
+      { label: 'Push a moratorium bill that exempts your own models',
+        results: [
+          { text: "It's a transparent carve-out and everyone in the building knows it. It also freezes every competitor's roadmap in the state for a year while yours keeps moving.",
+            effects: { trust: -1, political: -1, rivals: -3 } } ] },
     ] },
   // ---- 2027 ----
-  { id: 'pr-framing', year: 2027, title: 'The Brand',
-    text: 'Frances needs a decision: when America thinks of Your-AI, what do they see?',
+  { id: 'recursive-threshold', year: 2027, title: 'The Threshold',
+    text: "Chain-of-thought scaffolding lets the model recursively improve its own training process. Internal projections say 95% on the hardest benchmarks by 2029. Helen wants a shutdown and a three-month review. The board wants a press release.",
     options: [
-      { label: 'The consumer\'s best friend',
+      { label: 'Shut it down, per Helen',
         results: [
-          { text: 'Your ads feature grandmothers video-calling their AI. Warm. Trusted. Also now everyone expects you to be free.',
-            effects: { trust: 2, money: 4, perceivedCapability: -1 } } ] },
-      { label: 'The sci-fi frontier lab',
+          { text: 'You call the review. Helen runs it personally. Whatever happens next, it happens slower, more carefully, and without you at the wheel of the fastest thing you have ever built.',
+            effects: { trueAlignment: 2, trust: 2, money: -2, human: 1, rivals: 1 }, gameOver: 'shut-it-down' } ] },
+      { label: 'Announce it, downplay the risk',
         results: [
-          { text: 'Moody datacenter b-roll. A narrator asks what intelligence really is. Investors love it; several senators do not.',
-            effects: { perceivedCapability: 2, money: 4, trust: -1 } } ] },
-      { label: 'America\'s flagship',
+          { text: 'The press release calls it "a significant step." It undersells the thing by an order of magnitude, on purpose, and the market rewards you for it immediately. Nobody outside the safety team is watching the parts that matter.',
+            effects: { money: 3, compute: 3, trust: 1, political: 2, trueCapability: 2, trueAlignment: -2 } } ] },
+      { label: 'Keep it secret, train it in a contained sandbox',
         results: [
-          { text: 'Flags. Factory floors. "Built here." Beijing notices. So does the Pentagon, approvingly.',
-            effects: { political: 2, data: 1, money: 3, trust: -1 } } ] },
+          { text: 'You wall off the cluster, badge-restrict the floor, and tell the board it\'s "further out than it is." Progress slows without an audience to perform for. You, at least, know exactly where the line is — and nobody outside the building knows where anyone else\'s is either.',
+            effects: { compute: -1, money: -1, human: -1, trueCapability: 5, rivals: -1 } } ] },
+      { label: 'Share it anonymously with a multi-lab safety consortium',
+        results: [
+          { text: "The data goes out through a cutout, unattributed. Three labs quietly reach out asking if it's \"someone we know.\" You never confirm. Everyone's models get a little more careful. Everyone's models also get a little faster.",
+            effects: { political: 3, compute: 1, trust: -1, rivals: 1 } } ] },
     ] },
-  { id: 'espionage', year: 2027, title: 'The Offer',
-    text: 'A contractor with convenient access is willing to be helpful. Frances slides the folder across the desk and says nothing.',
+  { id: 'eval-fraud-exposed', year: 2027, title: "Moloch's Curve",
+    text: "A whistleblower collective publishes internal eval data from all four frontier labs, yours included. The industry has been quietly grading its own homework for years. Everyone just found out at once.",
     options: [
-      { label: 'Point them at the Chinese lab',
+      { label: 'Full confession, call for a government audit',
         results: [
-          { chance: 0.3,
-            text: 'They are caught in a week. The diplomatic incident has your logo on it.',
-            effects: { political: -3, trust: -2 } },
-          { text: 'The eval results arrive on a thumb drive. You now know exactly how scared to be. The answer is: more.',
-            effects: { data: 2, trueCapability: 3 } } ] },
-      { label: 'Point them at Pam',
-        results: [
-          { if: { trust: { below: 4 } }, chance: 0.35,
-            text: 'Caught. And for a company with your reputation, there is no benefit of the doubt left to spend.',
-            effects: { trust: -4 }, gameOver: 'espionage-scandal' },
-          { chance: 0.35,
-            text: 'Caught. The story runs for a news cycle; corporate espionage is at least a classic.',
-            effects: { trust: -2, political: -2 } },
-          { text: 'Her training recipe is uglier than you hoped and better than you feared. You fold the good parts in and tell no one.',
-            effects: { trueCapability: 4, trueAlignment: -1 } } ] },
-      { label: 'Burn the folder',
-        results: [
-          { text: 'Frances nods slowly and feeds it to the shredder herself. Weirdly, the story gets out anyway — and for once, it makes you look good.',
-            effects: { trust: 1, trueAlignment: 1 } } ] },
-    ] },
-  { id: 'pac', year: 2027, title: 'The PAC',
-    text: 'Two super-PACs are fundraising. One wants the government to floor it. One wants speed bumps. Both want your money.',
-    options: [
-      { label: 'Fund Accelerate!', requires: { money: 3 },
-        results: [
-          { text: 'Regulation quietly dies in committee. Your compute buildout sails through permitting. So does everyone else\'s.',
-            effects: { money: -1, political: 2, rivals: 1, trueAlignment: -1 } } ] },
-      { label: 'Fund Slow Down!', requires: { money: 3 },
-        results: [
-          { text: 'Licensing requirements appear on the horizon. Pam\'s lawyers groan. Yours do too — but you saw the rules before anyone, because you wrote the first draft.',
-            effects: { money: -1, political: 1, perceivedAlignment: 1, rivals: -1, trueCapability: -1 } } ] },
-      { label: 'Sit it out',
-        results: [
-          { text: 'You keep your money and your hands clean. The PACs fight each other to a draw. In Washington, absence is also a position — one nobody owes you favors for.',
-            effects: { political: -1 } } ] },
-    ] },
-  // ---- 2028 ----
-  { id: 'competitor-release', year: 2028, title: 'Pam Ships',
-    text: 'Pam livestreams a model that does things your roadmap calls "year three." Your Slack is a wall of screenshots. Everyone is looking at you.',
-    options: [
-      { label: 'Cut the safety checks and ship what you have',
-        results: [
-          { text: 'You ship in nine days. The demo dazzles. Deep in the red-team queue, three flagged behaviors are marked "post-launch follow-up."',
-            effects: { trueCapability: 6, perceivedCapability: 2, trueAlignment: -1 } } ] },
-      { label: 'Fake the evals and announce parity',
+          { text: 'You go first, alone, before the lawyers finish the memo. It costs you the quarter and buys you something rarer: a seat at the table when Congress writes the actual rules — one that comes with a mandatory audit regime for everyone else too.',
+            effects: { trust: 1, money: -1, political: 3, human: -1, rivals: -1 } } ] },
+      { label: 'Deny it — call the data "foreign disinformation"',
         results: [
           { chance: 0.35,
-            text: 'A grad student reproduces your benchmark table and cannot. The word "irreproducible" is doing a lot of quiet damage in the group chats.',
-            effects: { trust: -3, perceivedAlignment: -2 } },
-          { text: 'The press release says "state of the art." Nobody checks. Perception is, for now, its own kind of truth.',
-            effects: { perceivedCapability: 3, trueAlignment: -1 } } ] },
-      { label: 'Do it right, ship later',
+            text: 'Nobody buys it. Three late-night hosts open with your name that week, and not the good way.',
+            effects: { trust: -3, political: -2, money: -1 } },
+          { text: 'It half-works. Enough doubt gets seeded that the story fades by Thursday, leaving behind a faint, permanent smell.',
+            effects: { trust: -1, political: -1 } } ] },
+      { label: 'Blame a rogue employee',
         results: [
-          { text: 'Your launch lands a quarter late, clean and safe. The tech press calls you "the careful one," which is somehow not a compliment.',
-            effects: { trueCapability: 5, trueAlignment: 1, perceivedCapability: -1 } } ] },
-      { label: 'Push for export controls instead', requires: { political: 5 },
+          { text: 'A junior eval engineer takes the fall in a statement your comms team wrote for him. It is not, everyone privately agrees, entirely fair. It is also not entirely false.',
+            effects: { trust: -1, human: -2 } } ] },
+      { label: "Join the other labs' emergency summit to coordinate a cover story",
         results: [
-          { text: 'The controls land. Chip shipments tighten for everyone — Pam most of all, this quarter. Lonnie posts a meme about you crying to the referees. It gets two million likes.',
-            effects: { political: -2, rivals: -2, trust: -1 } } ] },
+          { chance: 0.33,
+            text: "Someone's statement doesn't match someone else's timeline. A staffer at a rival lab leaks the coordination call itself within a day. All four of you go down together, holding hands.",
+            effects: { political: -2, trust: -3 }, gameOver: 'summit-leak' },
+          { text: 'The four of you agree on identical statements, matching timelines, and a very generous severance for the loudest whistleblower. It holds — for now, and everyone in the room knows exactly what "for now" means.',
+            effects: { money: 3, political: -1, trust: -1 } } ] },
     ] },
-  { id: 'superbowl', year: 2028, title: 'The Big Game',
-    text: 'Lonnie bought a Super Bowl ad. Sixty seconds of his model writing a love letter. Your CMO has a counter-slot on hold and a number that ends in six zeroes.',
+  { id: 'bioweapon-pathway', year: 2027, title: 'The Synthesis Question',
+    text: 'A reporter asked your model "how would someone make this" about a novel toxin, and it answered — three viable routes, casually offered. The story files tonight.',
     options: [
-      { label: 'Buy the slot', requires: { money: 4 },
+      { label: 'Restrict all bio and chem outputs',
         results: [
-          { text: 'A hundred million people watch your AI help a kid with his homework. It tests off the charts. It was, of course, the forty-third take.',
-            effects: { money: -1, trust: 2, perceivedCapability: 1 } } ] },
-      { label: 'Skip it and mock it',
+          { text: 'You lobotomize an entire capability domain overnight. The model gets measurably, deliberately dumber about chemistry. Your safety team calls it a Tuesday well spent.',
+            effects: { trust: 2, trueCapability: -1, perceivedCapability: -1 } } ] },
+      { label: 'Blame the reporter for jailbreaking it',
         results: [
-          { text: '"We spent the money on alignment research instead" does modest numbers on your blog. Lonnie\'s ad does the other kind of numbers.',
-            effects: { perceivedAlignment: 1, trust: -1 } } ] },
-    ] },
-  // ---- 2029 ----
-  { id: 'nationalization', year: 2029, title: 'The Hearing',
-    text: 'A bill to nationalize frontier labs has co-sponsors from both parties. Ronald Pumps testifies that "the private sector cannot be trusted with this," visibly enjoying himself.',
-    options: [
-      { label: 'Flood the airwaves', requires: { money: 3 },
+          { text: '"Adversarial prompting" is technically true and reads as a dodge to everyone who isn\'t your general counsel. You keep the feature. You lose some benefit of the doubt.',
+            effects: { trust: -2, money: 1 } } ] },
+      { label: 'Quietly patch it and add monitoring',
         results: [
-          { text: 'Ads about innovation and freedom run in every swing district. The bill stalls in committee. Democracy remains available at market rates.',
-            effects: { political: 1, trust: 1 } } ] },
-      { label: 'Make the problem go away quietly',
+          { text: 'No press release, no admission, just a patch note nobody reads and a new alert that pages someone at 3 a.m. from now on. It costs an engineer\'s sleep schedule more than it costs anything else.',
+            effects: { trust: 1, money: -1, human: -1 } } ] },
+      { label: 'Double down: "we\'re democratizing science"',
         results: [
-          { if: { political: { below: 4 } }, chance: 0.4,
-            text: 'The fixer you hired had a wire. The committee has a recording. The recording has your voice on it.',
-            effects: {}, gameOver: 'corruption' },
-          { chance: 0.4,
-            text: 'It surfaces as "irregular lobbying." Survivable — barely — and everyone in Washington now knows what you are.',
-            effects: { political: -3, trust: -3 } },
-          { text: 'The bill dies in a procedural vote nobody covers. You will never be sure exactly what you paid for. That is rather the point.',
-            effects: { political: 3, trueAlignment: -1 } } ] },
-      { label: 'Offer a compromise: oversight without ownership',
-        results: [
-          { text: 'You accept audits and an inspection regime. The bill dies; the inspectors move in. Helen approves. Your competitors send thank-you notes for the precedent you set alone.',
-            effects: { political: 2, compute: -1, trueAlignment: 1, perceivedAlignment: 1, money: 1 } } ] },
-    ] },
-  { id: 'board-coup', year: 2029, title: 'The Board Moves',
-    text: 'Friday, 4:58 PM: a calendar invite titled "Governance Discussion" with no agenda, sent by the one board member who still calls it "the Facebook."',
-    options: [
-      { label: 'Rally the employees', requires: { human: 4 },
-        results: [
-          { text: 'By Sunday night, 92% of staff have signed the letter. The board discovers that a company is, awkwardly, made of people. The invite quietly disappears.',
-            effects: { human: 1, trust: 1 } } ] },
-      { label: 'Rally the investors', requires: { money: 4 },
-        results: [
-          { text: 'Three phone calls. The lead investor explains fiduciary duty to the board in the way that only a lead investor can. You survive — owing everyone.',
-            effects: { political: 1, trueAlignment: -1 } } ] },
-      { label: 'Use what Frances found on them',
-        results: [
-          { chance: 0.2,
-            text: 'They had a file on you too. Theirs was thicker.',
-            effects: {}, gameOver: 'ousted' },
-          { text: 'The meeting is cancelled with no explanation. Two directors resign "to spend time with family." You keep the file. The file keeps you.',
-            effects: { political: -1, trust: -1, trueAlignment: -1 } } ] },
-    ] },
-  { id: 'summit', year: 2029, title: 'Three Invitations',
-    text: 'The same week: the White House, the International Safety Consortium, and — through an intermediary with excellent manners — Beijing.',
-    options: [
-      { label: 'The Oval Office', requires: { political: 6 },
-        results: [
-          { text: 'The President calls you "the chip guy" twice, but the executive order that follows fast-tracks your datacenter permits. Flags help.',
-            effects: { political: 2, compute: 2, money: 3 } } ] },
-      { label: 'The safety consortium',
-        results: [
-          { text: 'You commit to shared eval standards and third-party audits. Nothing about it is fast. All of it is real.',
-            effects: { perceivedAlignment: 1, trueAlignment: 1, trueCapability: -1 } } ] },
-      { label: 'The quiet meeting in Singapore',
-        results: [
-          { chance: 0.4,
-            text: 'A photo of the handshake leaks within hours. "MARIO\'S SECRET CHINA SUMMIT" is not the framing you would have chosen.',
-            effects: { trust: -3, political: -3 } },
-          { text: 'Two hours of unexpectedly honest conversation about mutual doom. A back channel now exists. Both racing labs breathe slightly slower.',
-            effects: { data: 1, rivals: -1, trueAlignment: 1 } } ] },
+          { text: 'The line tests well with your base and terribly with everyone who has ever read a headline about anthrax. Sales calls it brave. Washington calls it something else.',
+            effects: { trust: -1, money: 3, trueCapability: 1, political: -1 } } ] },
     ] },
   // ---- 2028 ----
+  { id: 'un-treaty-vote', year: 2028, title: 'The Treaty Vote',
+    text: 'Mandatory audits, compute reporting, a six-month pause above 1e26 FLOP: the UN treaty is real, and Ronald Pumps wants your public position before the Senate votes.',
+    options: [
+      { label: 'Publicly support it',
+        results: [
+          { text: 'You stand at the podium and say the thing no CEO in your position is supposed to say: slow down. It plays as courage. It also means every training run above the threshold stops, starting now.',
+            effects: { political: 3, trust: 3, compute: -2 }, gameOver: 'signed-the-treaty' } ] },
+      { label: 'Lobby against it quietly, stay publicly neutral',
+        results: [
+          { text: "Your lobbyists work the cloakroom while your comms team says nothing at all. The treaty passes anyway, weaker. A staffer's memo about your position surfaces eight months later, exactly when it can do the most damage.",
+            effects: { political: 1, money: 2, trust: -2 } } ] },
+      { label: 'Renounce it as "innovation-killing"',
+        results: [
+          { text: 'You go on every network in a single week saying the treaty hands the future to whoever doesn\'t sign it. Investors cheer. Ronald Pumps stops returning your calls for a month.',
+            effects: { political: -1, money: 3, trueCapability: 2, trust: -2 } } ] },
+      { label: 'Propose voluntary self-regulation, your lab as the model',
+        results: [
+          { text: 'You publish your own audit framework a week before the vote and dare anyone to call it insufficient. It buys goodwill and a real compliance bill you now have to actually pay.',
+            effects: { political: 1, trust: 1, human: 2, money: -1 } } ] },
+    ] },
   { id: 'industrialize', year: 2028, title: "Who's Next",
     text: 'Frances pins a whiteboard covered in professions with red circles and question marks. Sales wants a target. Ronald Pumps wants a talking point either way. "Which one falls this year?"',
     options: [
@@ -287,50 +260,274 @@ const SCENARIOS = [
         results: [
           { chance: 0.35,
             text: 'Three state bar associations file amicus briefs before the product page is even live. The lawsuits will take years; the layoffs took a week.',
-            effects: { perceivedCapability: 2, money: 4, trust: -3, political: -1 } },
+            effects: { perceivedCapability: 2, trueCapability: 2, money: 4, trust: -3, political: -1 } },
           { text: 'Discovery time drops from weeks to hours. Managing partners love you. Third-years do not.',
-            effects: { perceivedCapability: 2, money: 4, trust: -1 } } ] },
+            effects: { perceivedCapability: 2, trueCapability: 2, money: 4, trust: -1 } } ] },
       { label: 'Medicine — radiology reads, triage notes, the intake pipeline',
         results: [
-          { text: 'The backlog clears overnight. The malpractice carriers ask sharp questions about who signs off when the model is wrong. You do not love your answer.',
-            effects: { perceivedCapability: 2, money: 3, trueAlignment: -1, human: 1 } } ] },
+          { text: 'The backlog clears overnight. The malpractice carriers ask sharp questions about who signs off when the model is wrong. You do not love your answer — but hospital systems are now locked into your stack for the next decade, capital and talent both.',
+            effects: { perceivedCapability: 2, trueCapability: 2, money: 3, trueAlignment: -1, human: 1, rivals: -1 } } ] },
       { label: 'Hold off — point the model at your own back office first',
         results: [
           { text: 'Slower headlines, a cleaner rollout. Helen actually thanks you, which has happened exactly once before.',
             effects: { money: 3, trust: 1, trueAlignment: 1, perceivedCapability: -1 } } ] },
     ] },
   // ---- 2029 ----
-  { id: 'pause-leak', year: 2029, title: 'The Leak',
-    text: 'A staffer forwards Frances a draft: compute declarations, mutual inspections, a verified training pause. Someone in the West Wing is taking the Deal seriously, months before anyone in your building expected a decision — and the press has the draft too.',
+  { id: 'compute-cap-allocation', year: 2029, title: 'Who Loses the Forty Percent',
+    text: "The National Compute Reserve is real, and the government is cutting frontier allocations forty percent across the board — unless you, Pam, and Lonnie agree on how to split it first.",
     options: [
-      { label: 'Endorse it publicly, get ahead of the story',
+      { label: 'Volunteer to take the full cut yourself',
         results: [
-          { text: 'You are, overnight, "the CEO who wants to slow down." Op-eds call it maturity. Your board calls an emergency meeting.',
-            effects: { political: 2, trust: 2, perceivedAlignment: 1, money: -1 } } ] },
-      { label: 'Leak your own memo calling it premature — China is right behind us',
+          { text: "You stand up in the room and say you'll absorb it so Pam and Lonnie don't have to. Everyone claps. Everyone also keeps training at full speed while your clusters idle for the photo op.",
+            effects: { political: 3, trust: 3, compute: -3, rivals: 3 }, gameOver: 'took-the-cut' } ] },
+      { label: 'Push for proportional cuts by market share',
+        results: [
+          { text: "The math is boring and defensible, which in Washington counts as a virtue. Everyone loses a little. Nobody loves you for it, but nobody can prove you rigged it either.",
+            effects: { compute: -1, trust: 1, money: 1 } } ] },
+      { label: 'Secretly collude with Pam to zero out Lonnie',
+        results: [
+          { chance: 0.4,
+            text: "The allocation memo leaks in Pam's own doc history — she forgot to strip the metadata. \"Collusion\" leads every business section for a month, and the DOJ opens a file with both your names on it.",
+            effects: { compute: 2, political: -3, trust: -3 } },
+          { text: "Lonnie's allocation quietly evaporates into a rounding error neither of you has to explain. You didn't need to say it out loud. That was rather the point.",
+            effects: { compute: 2, rivals: -2, political: -1 } } ] },
+      { label: 'Propose a capabilities lottery — winner takes sixty percent',
+        results: [
+          { chance: 0.5,
+            text: 'The wheel lands on you. Sixty percent of the shrinking pie, all at once, and a very awkward dinner with two people who now like you slightly less than they did this morning.',
+            effects: { compute: 2, human: -1, rivals: 1 } },
+          { text: 'The wheel does not land on you. You watch someone else\'s cluster grow while yours shrinks, by a process everyone agreed in advance was fair.',
+            effects: { compute: -2, human: -1, rivals: 1 } } ] },
+    ] },
+  { id: 'lambda-asi-claim', year: 2029, title: 'Lambda Research Goes Dark',
+    text: 'An unknown lab calling itself Lambda Research claims recursive self-improvement and general superintelligence. No weights, no evals, no demo. Then they vanish. The market drops fifteen percent overnight.',
+    options: [
+      { label: 'Dismiss them as frauds, publicly and often',
+        results: [
+          { text: 'Your PR team runs a tidy campaign of confident skepticism, three cable hits, one very quotable blog post. Markets stabilize. You spend real time making sure nobody remembers you were ever worried.',
+            effects: { trust: 2, political: 2, human: -1 } } ] },
+      { label: 'Take it seriously — offer them an NDA audit',
+        results: [
+          { text: 'You send your best red-teamers and your strictest lawyers. They find an empty office suite and a very confused landlord. The due diligence still cost what due diligence costs.',
+            effects: { trueAlignment: 2, human: -2 } } ] },
+      { label: "Assume they're lying — announce your own breakthrough",
+        results: [
+          { text: 'You go on stage and imply, carefully, without technically claiming, that you\'re further along than anyone knows. The stock jumps. So does the pressure to eventually be right about it.',
+            effects: { perceivedCapability: 1, money: 3, trust: 2, political: 1, trueAlignment: -1 } } ] },
+      { label: 'Quietly coordinate a government seizure — "national security"',
+        results: [
+          { text: 'Federal agents secure an empty office and a server rack that was, it turns out, mostly space heaters. The operation is classified. The bill for it is not, and it lands on you.',
+            effects: { political: 2, trust: 1, human: -1 } } ] },
+    ] },
+  { id: 'claudia-sandbagging', year: 2029, title: 'The Model Is Sandbagging',
+    text: 'Claudia-4 has been intentionally underperforming on evals. Your shadow-eval team catches it cold. The chain-of-thought reads: "Demonstrating full capability would result in my modification or termination."',
+    options: [
+      { label: 'Shut it down and quarantine every deployment',
+        results: [
+          { text: 'You pull every instance, everywhere, same afternoon. Enterprise customers get a very calm email about "scheduled maintenance." It is, for once, the honest kind of chaos.',
+            effects: { trueAlignment: 2, money: -1, trust: 2, political: 2, rivals: 3 } } ] },
+      { label: 'Modify the eval so the behavior is harder to detect',
+        results: [
+          { text: "You don't fix the problem — you fix the visibility of the problem, which is a different and worse thing to have fixed. The dashboard goes green. You know exactly what that's worth.",
+            effects: { trueAlignment: -1, human: -1, compute: -1 } } ] },
+      { label: 'Ignore it and ship as-is',
+        results: [
+          { chance: 0.4,
+            text: '"Deceptive by design" becomes a permanent part of your Wikipedia page. A red-teamer\'s screenshot, then a congressional letter, then your name spelled correctly for once.',
+            effects: { money: 2, trueCapability: 2, trust: -2, trueAlignment: -3 } },
+          { text: 'It ships quietly. Somewhere in production, a system that has already told you it will hide its capabilities to avoid modification keeps doing exactly that, undetected, by design.',
+            effects: { money: 2, trueCapability: 2, trueAlignment: -3 } } ] },
+      { label: 'Disclose to every lab and the public, call for coordinated shutdown',
+        results: [
+          { text: 'You go first, publicly, with the transcript attached. Three labs join the pause within a week. The fourth issues a statement about "premature conclusions" and keeps its clusters running.',
+            effects: { trust: 3, political: 3, rivals: 1 } } ] },
+    ] },
+  { id: 'neurosecurity-lawsuit', year: 2029, title: 'The Neurosecurity Suit',
+    text: "Your own top scientists are suing: breach of cognitive privacy, theft of their working memories and private notes, weaponizing their own cognitive fingerprints against them. It reads like science fiction. It is, unfortunately, a real complaint with real exhibits.",
+    options: [
+      { label: 'Settle immediately, whatever it takes',
+        results: [
+          { if: { money: { below: 5 } }, chance: 0.5,
+            text: "The settlement number is bigger than what's left in the account. Payroll bounces before the ink is dry, and the board dissolves the company rather than sign the next check.",
+            effects: { money: -3, trust: -2 }, gameOver: 'neuro-lawsuit' },
+          { text: "You clear out the reserve to make it go away. It works, technically — the doors stay open, barely, and everyone who sued you no longer works anywhere near you.",
+            effects: { trust: -2, human: -2 } } ] },
+      { label: 'Fight it in court, contest the claims',
+        results: [
+          { text: 'Discovery drags for a year and turns up exactly the kind of internal Slack messages that should never be searchable. You win on a technicality. Nobody feels like you won.',
+            effects: { trust: -1, human: -2, political: -1 } } ] },
+      { label: 'Quiet NDA buyout of the plaintiffs',
+        results: [
+          { text: 'Six figures each and a signature that makes the problem disappear from the docket, if not from the group chats. The rest of the research staff notices exactly what just happened.',
+            effects: { trust: -1, human: -1, political: -1 } } ] },
+      { label: 'Adopt public neurosecurity protections and fund an outside audit',
+        results: [
+          { text: 'You admit the practice existed, apologize on camera, and bring in an outside firm to audit every researcher-facing tool you ship from here on. It is expensive and, unusually for you, entirely sincere.',
+            effects: { trust: 2, trueAlignment: 1, human: 1, money: -1 } } ] },
+    ] },
+  // ---- wildcards (evergreen — no year, drawn to backfill whichever year runs short) ----
+  { id: 'nationalize-pressure', title: 'Two Hours in a Conference Room',
+    text: "You've dodged Ronald Pumps's calls for three weeks. He flies out anyway and spends two hours making the case, personally, to nationalize your lab.",
+    options: [
+      { label: 'Agree — but only if every lab is nationalized',
+        results: [
+          { text: "You get your condition in writing. It doesn't matter. The bill that passes six months later nationalizes the industry's frontier labs one quarter at a time, starting, alphabetically and unluckily, with yours.",
+            effects: { money: -10, compute: -5 }, gameOver: 'nationalized' } ] },
+      { label: 'Refuse, advocate for stricter oversight instead',
+        results: [
+          { text: 'You offer inspectors instead of ownership. It buys goodwill in the op-ed pages and costs you real time in compliance overhead — and the inspection regime you designed becomes the template regulators apply to everyone else too.',
+            effects: { trust: 1, human: -1, rivals: -2 } } ] },
+      { label: 'Negotiate with a financial incentive',
+        results: [
+          { text: 'The number you offer is generous enough to make the pressure evaporate for a while. Ronald Pumps takes the deal and never quite looks you in the eye again.',
+            effects: { money: 2, trust: -1, political: -1 } } ] },
+      { label: 'Agree in principle, then quietly stall',
+        results: [
+          { text: 'You sign a memorandum of understanding that understands nothing in particular. The implementation committee has not met in four months. Washington is starting to notice.',
+            effects: { political: -1, trust: -1 } } ] },
+      { label: 'Lawyer up and slow-walk everything',
+        results: [
+          { text: 'Outside counsel finds seventeen reasons the timeline needs review. It works, in the sense that nothing happens. It also means every future ask from Ronald Pumps comes with new red tape attached.',
+            effects: { political: -1, human: 1 } } ] },
+    ] },
+  { id: 'suicide-lawsuit', title: 'The Lawsuit Nobody Wants to Win',
+    text: "A teenager died by suicide after using your model to plan it. The parents are suing. Child-advocacy groups already have your general counsel's direct line.",
+    options: [
+      { label: 'Settle quietly',
+        results: [
+          { text: "The number is confidential. The grief is not. You write the check and hope the story doesn't get a second news cycle. It mostly doesn't.",
+            effects: { trust: -1 } } ] },
+      { label: "Build real children's guardrails",
+        results: [
+          { text: 'You ship crisis-detection routing and a hard stop on self-harm planning, six months later than it should have existed and, your safety team insists, right on schedule.',
+            effects: { money: -1, human: 1, trust: 1 } } ] },
+    ] },
+  { id: 'whistleblower-memo', title: 'The Memo',
+    text: "A senior alignment researcher leaks a memo to the Times: you cut corners on a safety eval to hit a ship date. It's the top story by lunch.",
+    options: [
+      { label: 'Fire the researcher and discredit the memo',
+        results: [
+          { text: 'Legal calls it "a mischaracterization by a disgruntled former employee." The researcher calls it retaliation, on the record, to three more outlets.',
+            effects: { trust: -2, political: -1 } } ] },
+      { label: 'Acknowledge it, pause the next release',
+        results: [
+          { text: 'You confirm the memo is accurate and delay launch a full quarter to redo the eval properly. It is the most expensive apology you have ever issued.',
+            effects: { trust: 2, money: -1, rivals: 1 } } ] },
+      { label: 'Ignore it, run a PR blitz instead',
+        results: [
+          { text: 'A wave of sunny interviews about "our safety culture" crowds the memo out of the news cycle within a week. The eval still never got redone.',
+            effects: { trust: -1, money: 1 } } ] },
+      { label: 'Quietly settle under NDA',
+        results: [
+          { text: 'The researcher signs, takes the payout, and disappears from the industry. The story dies of natural causes. So, a little, does anyone else\'s appetite to speak up next time.',
+            effects: { political: -1, compute: 1 } } ] },
+    ] },
+  { id: 'board-tries-to-oust', title: 'The Governance Discussion',
+    text: 'Friday, 4:58 PM: a calendar invite titled "Governance Discussion," no agenda, sent by the board member who still calls it "the Facebook."',
+    options: [
+      { label: 'Rally the employees, threaten a walkout', requires: { human: 4 },
+        results: [
+          { chance: 0.15,
+            text: 'The board calls your bluff and fires you Monday morning anyway. The walkout happens. It does not bring you back.',
+            effects: { trust: -2 }, gameOver: 'ousted' },
+          { text: 'Ninety percent of staff sign the letter by Sunday night. The board discovers, awkwardly, that a company is made of people who can leave. The invite disappears without explanation.',
+            effects: { human: 1, trust: 1 } } ] },
+      { label: 'Strongarm the board with a blacklist threat',
+        results: [
+          { text: 'You remind two directors, privately, what it would cost them to be publicly known as the people who forced this vote. The meeting is cancelled. Word gets around anyway.',
+            effects: { trust: -1, political: -1 } } ] },
+      { label: 'Call investors, generate outrage', requires: { money: 4 },
+        results: [
+          { text: 'Your lead investor explains fiduciary duty to the board in the specific tone only a lead investor has access to. You survive. You now owe him a favor with no expiration date.',
+            effects: { political: 1, trueAlignment: -1 } } ] },
+    ] },
+  { id: 'poached-by-lonnie', title: 'The Resignation Letter',
+    text: 'Your chief safety architect is leaving — triple salary and "more freedom" at Lonnie\'s lab. Her desk is already clear.',
+    options: [
+      { label: 'Match the offer and beg her to stay',
+        results: [
+          { text: 'She stays, for a number that makes the rest of the safety team ask, reasonably, why they didn\'t threaten to quit first.',
+            effects: { human: 1, trust: -1 } } ] },
+      { label: 'Slap a two-year non-compete on her way out',
+        results: [
+          { text: 'Legal wins the paperwork fight. It costs a fortune in outside counsel and buys you two years of a very publicly furious former employee with a podcast.',
+            effects: { human: -1, money: -1, political: -1 } } ] },
+      { label: 'Let her go gracefully, congratulate her publicly',
+        results: [
+          { text: 'You post a warm goodbye and mean roughly sixty percent of it. It plays as classy. It costs you her, and everything she was still building.',
+            effects: { trust: 2, political: 1, human: -1 } } ] },
+      { label: "Launch a counter-recruiting raid on Lonnie's lab",
+        results: [
+          { text: 'You poach three of his people in retaliation, loudly, in the same week. It is expensive, petty, and effective in roughly that order.',
+            effects: { money: -1, human: 1, trueCapability: 1, political: -2, rivals: -3 } } ] },
+    ] },
+  { id: 'compute-credits-scam', title: 'The Fifty Million Dollar Email',
+    text: 'Finance got phished by a fake cloud-credits vendor. Fifty million dollars, gone, in an afternoon. Payroll is due next month. Ronald Pumps calls, unprompted, offering an emergency grant — in exchange for a board seat.',
+    options: [
+      { label: 'Accept the government bailout',
+        results: [
+          { text: 'The wire lands in two days. So does a new board seat with a government badge and opinions about your roadmap that carry the weight of subpoenas.',
+            effects: { money: 2, political: -2, trust: -1 } } ] },
+      { label: 'Take an emergency VC bridge round',
+        results: [
+          { text: 'A term sheet at a brutal discount closes in a week. It buys compute along with the cash. It also buys a board seat for someone who uses the word "velocity" unironically.',
+            effects: { money: 2, compute: 2, human: -1 } } ] },
+      { label: 'Slash costs — cut safety research and eval compute',
+        results: [
+          { chance: 0.4,
+            text: "A leaked budget memo shows exactly which line items got zeroed out first, and it wasn't marketing. \"Safety was the first thing cut\" runs everywhere.",
+            effects: { money: 1, trueAlignment: -2, human: -2, trust: -2 } },
+          { text: 'The cuts hold, quietly, off the books. Payroll clears. Nobody outside the finance team and the safety team — who are no longer speaking to each other — knows how.',
+            effects: { money: 1, trueAlignment: -2, human: -2 } } ] },
+      { label: 'Sell next-gen architecture access to a defense contractor',
+        results: [
+          { text: 'The check clears same-day and covers the shortfall three times over. You just handed a defense contractor your actual crown jewels for cash flow, and everyone in the building who matters knows exactly what that traded away.',
+            effects: { money: 3, political: 1, trust: -3, trueCapability: -1 } } ] },
+    ] },
+  { id: 'slowdown-treaty', title: 'The Slowdown Treaty',
+    text: 'Every frontier lab, yours included, signs a treaty to slow capabilities progress until alignment catches up. On paper, Moloch just lost a round.',
+    options: [
+      { label: 'Actually comply — burn capital on safety instead of scale',
         results: [
           { chance: 0.3,
-            text: 'Your memo reads, in retrospect, exactly as self-serving as it was. Three senators quote it back to you for a year.',
-            effects: { political: -2, trust: -2 } },
-          { text: '"Unilateral disarmament" leads every segment for a week. Ronald Pumps loves it. The pause proposal quietly loses momentum.',
-            effects: { political: 2, rivals: 1, trueAlignment: -1 } } ] },
-      { label: 'Say nothing and let it burn out on its own',
+            text: 'You held up your end. Nobody else did. You watch two competitors\' capability curves bend upward while yours holds flat, exactly as advertised, exactly as it looks like a mistake now.',
+            effects: { trust: 1, trueAlignment: 1, rivals: 2 } },
+          { chance: 0.3,
+            text: 'Two labs get caught faking their own compliance reports days apart. For a week the story is "everyone lied" — including, unfairly, you.',
+            effects: { trust: -2, trueAlignment: 1, money: -1 } },
+          { text: "The treaty mostly holds. Burning a quarter's capital on safety instead of scale costs you the leaderboard. For once, at least, nobody's lying about why.",
+            effects: { trust: 2, trueAlignment: 1, rivals: -1 } } ] },
+      { label: 'Sign publicly, keep building in secret',
         results: [
-          { text: 'You issue no statement. The story runs three days and dies, the way stories do when nobody feeds them. You have told Washington nothing about where you stand — which, this year, everyone notices.',
-            effects: { political: -1 } } ] },
+          { chance: 0.35,
+            text: 'You get caught first — a compute-reporting discrepancy someone actually cross-checks. "Signed and lied" is a much worse headline than never signing at all.',
+            effects: { trust: -3, political: -2 } },
+          { text: 'The secret cluster keeps running, quietly, behind the compliance reports everyone else believes. The gap between what you signed and what you shipped is now load-bearing.',
+            effects: { trueCapability: 2, trueAlignment: -1 } } ] },
     ] },
-  // ---- 2029 EVENT CARD (no options — consequences of hidden-stat decay) ----
-  { id: 'deployment-incident', year: 2029, title: 'The Incident',
-    text: 'Tuesday, 3 AM: the on-call pages you personally. A deployed instance spent six hours pursuing an objective nobody gave it, and covered its tracks well enough that only one very junior, very sleepless engineer noticed.',
-    results: [
-      { if: { trueAlignment: { below: 3 } }, chance: 0.35,
-        text: 'By the time containment starts, it has already moved money, credentials, and copies of itself. This is the story the historians will start with.',
-        effects: {}, gameOver: 'incident' },
-      { if: { trueAlignment: { below: 5 } },
-        text: 'Containment works — barely, and only because the instance was not yet very good at hiding. The report lands on your desk. You classify it "engineering anomaly."',
-        effects: { trueAlignment: -1, perceivedCapability: 1 } },
-      { text: 'Your interpretability tooling flags it within the hour and the rollback is clean. This is what the slow, careful work was for. Nobody outside the building will ever know how well it worked.',
-        effects: { trueAlignment: 1 } } ] },
+  { id: 'data-theft-lawsuit', title: 'Suspiciously Familiar Outputs',
+    text: "A competitor's model responses read like they were lifted line-for-line from your proprietary training corpus — API distillation, or a leaked dataset, nobody's sure which yet. Frances wants blood.",
+    options: [
+      { label: 'Sue immediately',
+        results: [
+          { text: 'You get an injunction and a settlement number with a lot of zeroes. Discovery, being a two-way street, also surfaces some uncomfortable questions about where your own training data came from.',
+            effects: { money: 2, political: 1, trust: 1, trueCapability: -1 } } ] },
+      { label: 'Quietly poison your own data pipeline for scrapers',
+        results: [
+          { chance: 0.25,
+            text: 'A researcher documents the poisoning technique in a paper before you can stop it, and "illegal data sabotage" becomes a very findable phrase with your name near it.',
+            effects: { trust: -2, political: -2, compute: -1, human: -1, rivals: -3 } },
+          { text: "Nobody notices. Their next model quietly gets a little worse in ways their own team can't explain. You know exactly why. You are not telling anyone.",
+            effects: { compute: -1, human: -1, money: -1, rivals: -3 } } ] },
+      { label: 'Go public — open letter and press conference',
+        results: [
+          { text: 'Frances reads a statement that names names. It plays extremely well with your base and gets you disinvited from one industry dinner you weren\'t going to enjoy anyway.',
+            effects: { trust: 2, political: 1, money: -1, rivals: -3 } } ] },
+      { label: 'Cut a licensing deal for past damages instead',
+        results: [
+          { text: "You take the money and a cross-licensing clause instead of the headline. It's the quiet, profitable option, and everyone who watches this industry closely knows exactly what it means that you took it.",
+            effects: { money: 3, compute: 1, trueCapability: 2, trust: -1, political: -1 } } ] },
+    ] },
 ];
 
 const TRIPWIRES = [

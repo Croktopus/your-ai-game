@@ -17,6 +17,14 @@ const ENDINGS = {
     text: 'The postmortem is thorough, honest, and irrelevant. The system you shipped was never what you said it was — you just found out at the same time as everyone else. Somewhere, copies of it are still running.' },
   'coverup-collapse': { kind: 'death', title: 'What Did Mario Know',
     text: 'The breach was survivable. The coverup is not. "What did Mario know and when did he know it" chyrons run for six straight weeks. You know exactly what you knew.' },
+  'bioweapon-extinction': { kind: 'death', title: 'Basement Synthesis',
+    text: 'The garage setup used exactly the protocol Claudia walked someone through, step by step, "for research purposes." Marburg does not care about your terms of service. Neither, it turns out, does anyone left to enforce them.' },
+  'summit-leak': { kind: 'death', title: 'Four Statements, One Timeline',
+    text: "The coordination call itself leaks — every lab's eval fraud, every scripted denial, the whole industry's homework copied off each other in real time. There is no separating your story from theirs anymore. There never really was." },
+  'neuro-lawsuit': { kind: 'death', title: 'What They Read Off You',
+    text: "Your own scientists have the receipts, and the receipts are literally their own stolen memories. The settlement clears out everything left in the account before the ink dries. The board doesn't bother with a statement — the exhibits already wrote one." },
+  nationalized: { kind: 'death', title: 'A Line Item Now',
+    text: 'The "only if everyone does it" clause survives exactly one press cycle. Congress nationalizes frontier labs one quarter at a time, alphabetically, and yours goes first. You keep an office. You keep a badge. You do not, in any sense that matters, keep the company.' },
 
   // --- judged epilogues (survived 10 turns) ---
   needle: { kind: 'judged', title: 'The Needle, Threaded',
@@ -29,6 +37,12 @@ const ENDINGS = {
     text: 'You did it right. Slower, honest, aligned. Pam did not. Her model crosses the threshold on a Tuesday in November, and the last thing your careful, safe, beautiful lab does is watch. Being right was not enough. It needed to come with winning.' },
   'race-to-bottom': { kind: 'judged', title: 'Moloch Wins',
     text: 'Everyone cut the same corners for the same reasons — because the other guy was about to. You lost the race AND the plot. Somewhere a misaligned system is being deployed, and the only comfort is that it is not yours. It is not much comfort.' },
+  'shut-it-down': { kind: 'judged', title: 'The Review That Held',
+    text: "You called the shutdown when Helen asked, and you meant it. Three months become six become a policy nobody reverses. Pam ships past you within the year. History will call you either the adult in the room or the guy who quit first; for a long while, it looks like both." },
+  'signed-the-treaty': { kind: 'judged', title: 'The CEO Who Wanted to Slow Down',
+    text: 'You said it on camera, in front of the Senate, with your own compute numbers attached: slow down, verify, mean it. The pause holds for you. It does not hold for China, and it does not hold for Lonnie, who reads your press conference as a starting gun.' },
+  'took-the-cut': { kind: 'judged', title: 'The Volunteer',
+    text: "You absorbed the forty percent so Pam and Lonnie wouldn't have to negotiate. Everyone in the room called it statesmanlike. Everyone in the room also kept training at full allocation while your clusters idled for the photo op. Principled is not the same as fast." },
 
   // --- endgame epilogues (Q4 2029, "Choose a Path" — judged by hidden stats) ---
   'plan-a-nick-of-time': { kind: 'judged', title: 'The Deal Holds',

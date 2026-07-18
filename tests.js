@@ -318,7 +318,8 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
 
   const TOTAL = 150; // 3 setups * 50 seeds
   const DEATH_IDS = new Set(['bankrupt','riots','ousted','shutdown','corruption',
-    'espionage-scandal','incident','coverup-collapse']);
+    'espionage-scandal','incident','coverup-collapse',
+    'bioweapon-extinction','summit-leak','neuro-lawsuit','nationalized']);
   let deaths = 0, trueWins = 0;
   const planEndingsSeen = new Set();
   for (const [id, count] of Object.entries(tally)) {
