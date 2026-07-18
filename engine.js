@@ -47,6 +47,39 @@ const Engine = (() => {
     };
   }
 
-  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun };
+  function getStat(state, key) {
+    if (key === 'rivalMax') return Math.max(...Object.values(state.rivals));
+    return state.stats[key];
+  }
+
+  function checkCondition(cond, state) {
+    if (!cond) return true;
+    return Object.entries(cond).every(([key, test]) => {
+      const v = getStat(state, key);
+      if (test.below !== undefined && !(v < test.below)) return false;
+      if (test.atLeast !== undefined && !(v >= test.atLeast)) return false;
+      return true;
+    });
+  }
+
+  function meetsRequires(req, state) {
+    if (!req) return true;
+    return Object.entries(req).every(([key, min]) => getStat(state, key) >= min);
+  }
+
+  function applyEffects(state, effects) {
+    if (!effects) return;
+    for (const [key, delta] of Object.entries(effects)) {
+      if (key === 'rivals') {
+        for (const r of Object.keys(state.rivals))
+          state.rivals[r] = Math.max(0, state.rivals[r] + delta);
+        continue;
+      }
+      const [lo, hi] = CLAMPS[key];
+      state.stats[key] = Math.min(hi, Math.max(lo, state.stats[key] + delta));
+    }
+  }
+
+  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

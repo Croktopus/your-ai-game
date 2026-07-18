@@ -42,5 +42,37 @@ t('createRun copies setup stats (no shared reference)', () => {
   eq(st.turn, 0); eq(st.rivals, { pam: 5, lonnie: 4 }); eq(st.ending, null);
 });
 
+function mkState() {
+  const s = E.createRun(SETUP, 1, { scenarios: [] });
+  return s;
+}
+
+t('checkCondition below/atLeast/rivalMax, empty passes', () => {
+  const s = mkState();
+  ok(E.checkCondition(undefined, s), 'undefined cond passes');
+  ok(E.checkCondition({ trust: { below: 6 } }, s));
+  ok(!E.checkCondition({ trust: { below: 5 } }, s), '5 is not below 5');
+  ok(E.checkCondition({ trust: { atLeast: 5 } }, s));
+  ok(E.checkCondition({ rivalMax: { atLeast: 5 } }, s), 'pam starts at 5');
+  ok(!E.checkCondition({ trust: { atLeast: 5, below: 5 } }, s), 'all clauses must hold');
+});
+
+t('meetsRequires is atLeast semantics', () => {
+  const s = mkState();
+  ok(E.meetsRequires(undefined, s));
+  ok(E.meetsRequires({ political: 5 }, s));
+  ok(!E.meetsRequires({ political: 6 }, s));
+});
+
+t('applyEffects clamps and handles rivals key', () => {
+  const s = mkState();
+  E.applyEffects(s, { money: -99, trueCapability: 99, rivals: -2 });
+  eq(s.stats.money, 0); eq(s.stats.trueCapability, 20);
+  eq(s.rivals, { pam: 3, lonnie: 2 });
+  E.applyEffects(s, { rivals: -99 });
+  eq(s.rivals, { pam: 0, lonnie: 0 }, 'rivals floor at 0');
+  E.applyEffects(s, undefined); // no-op, must not throw
+});
+
 console.log(pass + ' passed, ' + fail + ' failed');
 if (typeof process !== 'undefined' && fail) process.exit(1);
