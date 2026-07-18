@@ -80,6 +80,21 @@ const Engine = (() => {
     }
   }
 
-  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects };
+  function fireResult(state, r) {
+    applyEffects(state, r.effects);
+    if (r.gameOver) state.ending = r.gameOver;
+    return r;
+  }
+
+  function resolveOption(state, option) {
+    for (const r of option.results) {
+      if (!checkCondition(r.if, state)) continue;
+      if (r.chance !== undefined && state.rng() >= r.chance) continue;
+      return fireResult(state, r);
+    }
+    return fireResult(state, option.results[option.results.length - 1]);
+  }
+
+  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

@@ -74,5 +74,48 @@ t('applyEffects clamps and handles rivals key', () => {
   E.applyEffects(s, undefined); // no-op, must not throw
 });
 
+t('resolveOption: conditional first, chance roll, default fallthrough', () => {
+  const opt = { label: 'x', results: [
+    { if: { trust: { below: 3 } }, chance: 0.5, text: 'bad', effects: { trust: -5 }, gameOver: 'dead' },
+    { chance: 0.5, text: 'leak', effects: { trust: -3 } },
+    { text: 'safe', effects: { trueAlignment: -1 } },
+  ] };
+  // trust=5: first result's `if` fails. Force rng high so second's chance misses -> default.
+  const s1 = mkState(); s1.rng = () => 0.99;
+  eq(E.resolveOption(s1, opt).text, 'safe');
+  eq(s1.stats.trueAlignment, 4); eq(s1.ending, null);
+  // Force rng low so second result's chance hits.
+  const s2 = mkState(); s2.rng = () => 0.01;
+  eq(E.resolveOption(s2, opt).text, 'leak');
+  eq(s2.stats.trust, 2);
+  // trust below 3 + low roll -> first result fires and kills the run.
+  const s3 = mkState(); s3.stats.trust = 2; s3.rng = () => 0.01;
+  eq(E.resolveOption(s3, opt).text, 'bad');
+  eq(s3.ending, 'dead');
+});
+
+t('resolveOption falls back to last result if nothing fires', () => {
+  const opt = { label: 'x', results: [
+    { chance: 0.5, text: 'a', effects: {} },
+    { chance: 0.5, text: 'b', effects: { money: -1 } },  // authoring error: no unconditional default
+  ] };
+  const s = mkState(); s.rng = () => 0.99;
+  eq(E.resolveOption(s, opt).text, 'b');
+  eq(s.stats.money, 4, 'fallback still applies effects');
+});
+
+t('event cards: resolveOption works on an option-less card with its own results', () => {
+  const card = { id: 'ev', era: 3, title: 'x', text: '', results: [
+    { if: { trueAlignment: { below: 3 } }, chance: 1, text: 'boom', effects: {}, gameOver: 'dead' },
+    { text: 'near miss', effects: { trust: -1 } },
+  ] };
+  const s1 = mkState(); s1.rng = () => 0.5;   // trueAlignment 5: condition fails -> default
+  eq(E.resolveOption(s1, card).text, 'near miss');
+  eq(s1.stats.trust, 4);
+  const s2 = mkState(); s2.stats.trueAlignment = 2; s2.rng = () => 0.5;
+  eq(E.resolveOption(s2, card).text, 'boom');
+  eq(s2.ending, 'dead');
+});
+
 console.log(pass + ' passed, ' + fail + ' failed');
 if (typeof process !== 'undefined' && fail) process.exit(1);
