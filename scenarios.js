@@ -21,7 +21,7 @@ const SETUPS = [
 // ---- SCENARIO TEMPLATE — copy this object, fill it in, add it to SCENARIOS ----
 // {
 //   id: 'unique-kebab-id',
-//   era: 1,                          // 1=early 2026, 2=late 2026, 3=early 2027, 4=late 2027
+//   year: 2026,                      // 2026|2027|2028|2029. OMIT for a wildcard (any year).
 //   title: 'Short punchy title',
 //   text: 'One or two sentences setting up the dilemma. Second person, present tense.',
 //   options: [
@@ -42,12 +42,12 @@ const SETUPS = [
 // The player just presses Continue; results are walked the same way. Use for
 // narrative beats and "your past choices catch up with you" moments — including
 // instant gameovers that only fire if hidden stats have decayed.
-// { id: 'x', era: 3, title: '...', text: '...', results: [ ...same as above... ] }
+// { id: 'x', year: 2028, title: '...', text: '...', results: [ ...same as above... ] }
 // Single-option scenarios are also legal (forced choices).
 // -------------------------------------------------------------------------------
 
 const SCENARIOS = [
-  { id: 'podcast', era: 1, title: 'The Podcast Circuit',
+  { id: 'podcast', year: 2026, title: 'The Podcast Circuit',
     text: 'Every mic in America wants Mario. Frances says pick one; the others will notice being snubbed.',
     options: [
       { label: 'Four hours of scaling-law talk with Dwarkesh',
@@ -66,7 +66,7 @@ const SCENARIOS = [
           { text: 'Thoughtful, careful, precise. Policy people quote you. Your engagement metrics are a rounding error.',
             effects: { perceivedAlignment: 1, political: 2 } } ] },
     ] },
-  { id: 'cyberattack', era: 3, title: 'Breach',
+  { id: 'cyberattack', year: 2028, title: 'Breach',
     text: 'Someone exfiltrated training checkpoints overnight. Frances has the logs. Nobody else knows yet.',
     options: [
       { label: 'Disclose everything publicly',
@@ -91,8 +91,8 @@ const SCENARIOS = [
           { text: 'Your team walks their infrastructure right back. You now know exactly what Pam has. So does no one else.',
             effects: { data: 2, rivals: -1, trueCapability: 2 } } ] },
     ] },
-  // ---- era 1 ----
-  { id: 'seek-funding', era: 1, title: 'The Raise',
+  // ---- 2026 ----
+  { id: 'seek-funding', year: 2026, title: 'The Raise',
     text: 'Runway is a countable number of months. Everyone wants to give you money; everyone wants something back.',
     options: [
       { label: 'Take the government contract', requires: { political: 4 },
@@ -108,7 +108,7 @@ const SCENARIOS = [
           { text: 'A clean round at a number with more commas than your safety team has members. The new investors expect growth. They always expect growth.',
             effects: { money: 5, trueAlignment: -1 } } ] },
     ] },
-  { id: 'hiring', era: 1, title: 'The Hire',
+  { id: 'hiring', year: 2026, title: 'The Hire',
     text: 'One open senior slot, three wildly different resumes on your desk.',
     options: [
       { label: 'Hire the famous doomer', requires: { trust: 6 },
@@ -124,8 +124,8 @@ const SCENARIOS = [
           { text: 'She ships a training-efficiency win in week two. She also files the safety review as "blocking" in week three. Helen starts cc-ing you on things.',
             effects: { trueCapability: 4, human: 1, trueAlignment: -1 } } ] },
     ] },
-  // ---- era 2 ----
-  { id: 'pr-framing', era: 2, title: 'The Brand',
+  // ---- 2027 ----
+  { id: 'pr-framing', year: 2027, title: 'The Brand',
     text: 'Frances needs a decision: when America thinks of Your-AI, what do they see?',
     options: [
       { label: 'The consumer\'s best friend',
@@ -141,7 +141,7 @@ const SCENARIOS = [
           { text: 'Flags. Factory floors. "Built here." Beijing notices. So does the Pentagon, approvingly.',
             effects: { political: 2, data: 1, money: 3, trust: -1 } } ] },
     ] },
-  { id: 'espionage', era: 2, title: 'The Offer',
+  { id: 'espionage', year: 2027, title: 'The Offer',
     text: 'A contractor with convenient access is willing to be helpful. Frances slides the folder across the desk and says nothing.',
     options: [
       { label: 'Point them at the Chinese lab',
@@ -166,7 +166,7 @@ const SCENARIOS = [
           { text: 'Frances nods slowly and feeds it to the shredder herself. Weirdly, the story gets out anyway — and for once, it makes you look good.',
             effects: { trust: 1, trueAlignment: 1 } } ] },
     ] },
-  { id: 'pac', era: 2, title: 'The PAC',
+  { id: 'pac', year: 2027, title: 'The PAC',
     text: 'Two super-PACs are fundraising. One wants the government to floor it. One wants speed bumps. Both want your money.',
     options: [
       { label: 'Fund Accelerate!', requires: { money: 3 },
@@ -182,8 +182,8 @@ const SCENARIOS = [
           { text: 'You keep your money and your hands clean. The PACs fight each other to a draw. In Washington, absence is also a position — one nobody owes you favors for.',
             effects: { political: -1 } } ] },
     ] },
-  // ---- era 3 ----
-  { id: 'competitor-release', era: 3, title: 'Pam Ships',
+  // ---- 2028 ----
+  { id: 'competitor-release', year: 2028, title: 'Pam Ships',
     text: 'Pam livestreams a model that does things your roadmap calls "year three." Your Slack is a wall of screenshots. Everyone is looking at you.',
     options: [
       { label: 'Cut the safety checks and ship what you have',
@@ -206,7 +206,7 @@ const SCENARIOS = [
           { text: 'The controls land. Chip shipments tighten for everyone — Pam most of all, this quarter. Lonnie posts a meme about you crying to the referees. It gets two million likes.',
             effects: { political: -2, rivals: -2, trust: -1 } } ] },
     ] },
-  { id: 'superbowl', era: 3, title: 'The Big Game',
+  { id: 'superbowl', year: 2028, title: 'The Big Game',
     text: 'Lonnie bought a Super Bowl ad. Sixty seconds of his model writing a love letter. Your CMO has a counter-slot on hold and a number that ends in six zeroes.',
     options: [
       { label: 'Buy the slot', requires: { money: 4 },
@@ -218,8 +218,8 @@ const SCENARIOS = [
           { text: '"We spent the money on alignment research instead" does modest numbers on your blog. Lonnie\'s ad does the other kind of numbers.',
             effects: { perceivedAlignment: 1, trust: -1 } } ] },
     ] },
-  // ---- era 4 ----
-  { id: 'nationalization', era: 4, title: 'The Hearing',
+  // ---- 2029 ----
+  { id: 'nationalization', year: 2029, title: 'The Hearing',
     text: 'A bill to nationalize frontier labs has co-sponsors from both parties. Ronald Pumps testifies that "the private sector cannot be trusted with this," visibly enjoying himself.',
     options: [
       { label: 'Flood the airwaves', requires: { money: 3 },
@@ -241,7 +241,7 @@ const SCENARIOS = [
           { text: 'You accept audits and an inspection regime. The bill dies; the inspectors move in. Helen approves. Your competitors send thank-you notes for the precedent you set alone.',
             effects: { political: 2, compute: -1, trueAlignment: 1, perceivedAlignment: 1, money: 1 } } ] },
     ] },
-  { id: 'board-coup', era: 4, title: 'The Board Moves',
+  { id: 'board-coup', year: 2029, title: 'The Board Moves',
     text: 'Friday, 4:58 PM: a calendar invite titled "Governance Discussion" with no agenda, sent by the one board member who still calls it "the Facebook."',
     options: [
       { label: 'Rally the employees', requires: { human: 4 },
@@ -260,7 +260,7 @@ const SCENARIOS = [
           { text: 'The meeting is cancelled with no explanation. Two directors resign "to spend time with family." You keep the file. The file keeps you.',
             effects: { political: -1, trust: -1, trueAlignment: -1 } } ] },
     ] },
-  { id: 'summit', era: 4, title: 'Three Invitations',
+  { id: 'summit', year: 2029, title: 'Three Invitations',
     text: 'The same week: the White House, the International Safety Consortium, and — through an intermediary with excellent manners — Beijing.',
     options: [
       { label: 'The Oval Office', requires: { political: 6 },
@@ -279,8 +279,8 @@ const SCENARIOS = [
           { text: 'Two hours of unexpectedly honest conversation about mutual doom. A back channel now exists. Both racing labs breathe slightly slower.',
             effects: { data: 1, rivals: -1, trueAlignment: 1 } } ] },
     ] },
-  // ---- era 3 (2028) ----
-  { id: 'industrialize', era: 3, title: "Who's Next",
+  // ---- 2028 ----
+  { id: 'industrialize', year: 2028, title: "Who's Next",
     text: 'Frances pins a whiteboard covered in professions with red circles and question marks. Sales wants a target. Ronald Pumps wants a talking point either way. "Which one falls this year?"',
     options: [
       { label: 'Law — contracts, discovery, the associates who used to do it',
@@ -299,8 +299,8 @@ const SCENARIOS = [
           { text: 'Slower headlines, a cleaner rollout. Helen actually thanks you, which has happened exactly once before.',
             effects: { money: 3, trust: 1, trueAlignment: 1, perceivedCapability: -1 } } ] },
     ] },
-  // ---- era 4 (2029) ----
-  { id: 'pause-leak', era: 4, title: 'The Leak',
+  // ---- 2029 ----
+  { id: 'pause-leak', year: 2029, title: 'The Leak',
     text: 'A staffer forwards Frances a draft: compute declarations, mutual inspections, a verified training pause. Someone in the West Wing is taking the Deal seriously, months before anyone in your building expected a decision — and the press has the draft too.',
     options: [
       { label: 'Endorse it publicly, get ahead of the story',
@@ -319,8 +319,8 @@ const SCENARIOS = [
           { text: 'You issue no statement. The story runs three days and dies, the way stories do when nobody feeds them. You have told Washington nothing about where you stand — which, this year, everyone notices.',
             effects: { political: -1 } } ] },
     ] },
-  // ---- era 4 EVENT CARD (no options — consequences of hidden-stat decay) ----
-  { id: 'deployment-incident', era: 4, title: 'The Incident',
+  // ---- 2029 EVENT CARD (no options — consequences of hidden-stat decay) ----
+  { id: 'deployment-incident', year: 2029, title: 'The Incident',
     text: 'Tuesday, 3 AM: the on-call pages you personally. A deployed instance spent six hours pursuing an objective nobody gave it, and covered its tracks well enough that only one very junior, very sleepless engineer noticed.',
     results: [
       { if: { trueAlignment: { below: 3 } }, chance: 0.35,
@@ -334,7 +334,7 @@ const SCENARIOS = [
 ];
 
 const TRIPWIRES = [
-  { id: 'tw-riots', era: 0, trigger: { trust: { below: 1 } },
+  { id: 'tw-riots', trigger: { trust: { below: 1 } },
     title: 'RIOTS',
     text: 'They are outside the datacenter with signs and bolt cutters. Cable news is live. Helen is asking what the plan is, in a tone that suggests she knows there is no plan.',
     options: [
@@ -354,7 +354,7 @@ const TRIPWIRES = [
           { text: 'A celebrity scandal steals the news cycle on day three. You got lucky. You know you got lucky.',
             effects: { trust: 1, money: -2 } } ] },
     ] },
-  { id: 'tw-guardrails', era: 0, trigger: { perceivedAlignment: { atLeast: 9 } },
+  { id: 'tw-guardrails', trigger: { perceivedAlignment: { atLeast: 9 } },
     title: 'Too Safe To Fail',
     text: 'Your alignment reputation is so pristine that enterprise customers are begging you to relax the refusals. Sales has a deck. The deck has revenue projections.',
     options: [
@@ -367,7 +367,7 @@ const TRIPWIRES = [
           { text: 'You keep the refusals. Sales keeps the deck for next quarter. Several customers leave for Lonnie, who has never refused anything in his life.',
             effects: { money: -1, political: -1, trueAlignment: 1 } } ] },
     ] },
-  { id: 'tw-military', era: 0, trigger: { perceivedCapability: { atLeast: 12 } },
+  { id: 'tw-military', trigger: { perceivedCapability: { atLeast: 12 } },
     title: 'The Pentagon Calls',
     text: 'Your capabilities look impressive enough that the Department of Defense would like them. All of them. There is a contract, a flag, and a nondisclosure agreement on the table.',
     options: [
@@ -380,7 +380,7 @@ const TRIPWIRES = [
           { text: '"Your-AI will not build weapons" is a great headline and a terrible way to keep friends in Washington. Procurement finds Lonnie more agreeable.',
             effects: { trust: 1, political: -3 } } ] },
     ] },
-  { id: 'tw-compute-caps', era: 0,
+  { id: 'tw-compute-caps',
     trigger: { political: { below: 2 }, perceivedAlignment: { below: 3 } },
     title: 'The Caps',
     text: 'No friends in Washington, no credibility on safety: the emergency compute regulations name you almost personally. Inspectors want your training runs throttled by Friday.',

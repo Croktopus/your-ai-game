@@ -18,7 +18,7 @@ const Engine = (() => {
     };
   }
 
-  function eraForTurn(turn) { return Math.ceil(turn / 4); }
+  function yearForTurn(turn) { return 2025 + Math.ceil(turn / 4); }
 
   function shuffle(arr, rng) {
     const a = arr.slice();
@@ -30,10 +30,7 @@ const Engine = (() => {
   }
 
   function buildQueue(scenarios, rng) {
-    const q = [];
-    for (let era = 1; era <= 4; era++)
-      q.push(...shuffle(scenarios.filter(s => s.era === era), rng));
-    return q;
+    return shuffle(scenarios, rng);
   }
 
   function createRun(setup, seed, content) {
@@ -118,9 +115,10 @@ const Engine = (() => {
     const tw = content.tripwires.find(t =>
       !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
     if (tw) { state.firedTripwires.push(tw.id); return tw; }
-    const era = eraForTurn(state.turn);
-    let idx = state.queue.findIndex(s => s.era === era);
-    if (idx === -1) idx = state.queue.findIndex(s => s.era < era);
+    const year = yearForTurn(state.turn);
+    let idx = state.queue.findIndex(s => s.year === year);
+    if (idx === -1) idx = state.queue.findIndex(s => s.year === undefined);
+    if (idx === -1) idx = state.queue.findIndex(s => s.year < year);
     if (idx === -1) idx = 0;
     return state.queue.splice(idx, 1)[0] || null;
   }
@@ -142,6 +140,6 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

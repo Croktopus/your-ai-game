@@ -28,13 +28,13 @@ Copy the template block from `scenarios.js`, fill it in, append it to `SCENARIOS
 6. **`requires` gates** show up as locked-but-visible buttons — visible stats only (`money`, `compute`, `trust`, `political`, `human`, `data`). Never gate on hidden stats.
 7. **`gameOver: 'ending-id'`** ends the run instantly. Add your ending to `endings.js` (`'ending-id': { title, text }`).
 8. **Tone:** darkly satirical, grounded, second person, present tense. Cast: Mario (you), Pam (OpenAI-alike), Lonnie (X-AI-alike), Helen (safety), Ronald Pumps (gov), Frances (CSO).
-9. **Eras:** 1 = 2026, 2 = 2027, 3 = 2028, 4 = 2029. Each era is a full year (4 quarterly turns). Stakes should escalate with era.
+9. **Years:** `year: 2026|2027|2028|2029` places a card in that year (4 quarterly turns each). Stakes should escalate by year. OMIT `year` entirely to make the card a wildcard — usable in any year, drawn to fill whichever year runs short of dedicated cards. A card can never appear twice in the same run (drawn cards are removed from the deck).
 10. **Event cards:** omit `options` and give the scenario its own `results` — the player just presses Continue. Perfect for consequences of hidden-stat decay (see `deployment-incident`). A scenario with exactly one option is a forced choice; also fine.
 
 ## Endgame & report cards
 
 Turn 16 (Q4 2029) is reserved — `beginTurn` hands back `ENDGAME` from `scenarios.js` instead
-of drawing from the deck, so never tag a regular scenario `era: 4` expecting it to land there;
+of drawing from the deck, so never expect a regular `year: 2029` scenario to land there;
 write for turns 13–15 instead. `ENDGAME`'s options branch on hidden stats via the engine's
 derived `perceptionGap` and `capabilityLead` keys (see `engine.js` `getStat()`) — don't add new
 scenarios there, extend `ENDGAME` itself if the plan branches need to change. The yearly report

@@ -14,7 +14,7 @@ function ok(v, msg) { if (!v) throw new Error(msg || 'expected truthy'); }
 const SETUP = { id: 't', name: 'T', stats: {
   money: 5, compute: 5, trust: 5, political: 5, human: 5, data: 5,
   perceivedAlignment: 5, trueAlignment: 5, perceivedCapability: 5, trueCapability: 5 } };
-const SCEN = (id, era) => ({ id, era, title: id, text: '', options: [
+const SCEN = (id, year) => ({ id, year, title: id, text: '', options: [
   { label: 'x', results: [{ text: 'x', effects: {} }] }] });
 
 t('rng is deterministic for same seed', () => {
@@ -23,17 +23,17 @@ t('rng is deterministic for same seed', () => {
   ok(E.mulberry32(42)() !== E.mulberry32(43)(), 'different seeds differ');
 });
 
-t('eraForTurn maps 16 turns onto 4 eras (years)', () => {
-  eq([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].map(E.eraForTurn),
-     [1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4]);
+t('yearForTurn maps 16 turns onto 4 years', () => {
+  eq([1,4,5,8,9,12,13,16].map(E.yearForTurn),
+     [2026,2026,2027,2027,2028,2028,2029,2029]);
 });
 
-t('buildQueue orders by era, shuffles within era by seed', () => {
-  const scen = [SCEN('a',2), SCEN('b',1), SCEN('c',1), SCEN('d',2)];
+t('buildQueue is a single seeded shuffle of all scenarios', () => {
+  const scen = [SCEN('a',2027), SCEN('b',2026), SCEN('c',2026), SCEN('d',2027)];
   const q1 = E.buildQueue(scen, E.mulberry32(7));
   const q2 = E.buildQueue(scen, E.mulberry32(7));
   eq(q1.map(s => s.id), q2.map(s => s.id), 'same seed same order');
-  eq(q1.map(s => s.era), [1,1,2,2], 'era ascending');
+  eq(q1.map(s => s.id).sort(), scen.map(s => s.id).sort(), 'contains all scenarios');
 });
 
 t('createRun copies setup stats (no shared reference)', () => {
@@ -121,7 +121,7 @@ t('event cards: resolveOption works on an option-less card with its own results'
 const CONTENT0 = { scenarios: [], tripwires: [], headlines: [] };
 
 t('beginTurn ticks burn, rivals, turn; draws from queue', () => {
-  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 1)] });
+  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 2026)] });
   s.rng = () => 0.99; // no rival bonus; headline pool empty
   const card = E.beginTurn(s, CONTENT0);
   eq(s.turn, 1); eq(s.stats.money, 4);
@@ -131,16 +131,16 @@ t('beginTurn ticks burn, rivals, turn; draws from queue', () => {
 });
 
 t('beginTurn: bankruptcy ends the run before any card', () => {
-  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 1)] });
+  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 2026)] });
   s.stats.money = 1; s.rng = () => 0.99;
   eq(E.beginTurn(s, CONTENT0), null);
   eq(s.ending, 'bankrupt');
 });
 
 t('beginTurn: tripwire interrupts the deck, fires once', () => {
-  const tw = { id: 'riots', era: 0, trigger: { trust: { below: 1 } }, title: 'Riots', text: '',
+  const tw = { id: 'riots', trigger: { trust: { below: 1 } }, title: 'Riots', text: '',
     options: [{ label: 'x', results: [{ text: 'x', effects: { trust: 2 } }] }] };
-  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 1), SCEN('b', 1)] });
+  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 2026), SCEN('b', 2026)] });
   s.stats.trust = 0; s.rng = () => 0.99;
   const content = { scenarios: [], tripwires: [tw], headlines: [] };
   eq(E.beginTurn(s, content).id, 'riots');
@@ -150,15 +150,26 @@ t('beginTurn: tripwire interrupts the deck, fires once', () => {
   ok(next.id === 'a' || next.id === 'b', 'draws from deck, does not re-fire tripwire');
 });
 
-t('beginTurn: era-aware draw prefers current era over older leftovers', () => {
+t('beginTurn: year-aware draw prefers current year over older leftovers', () => {
   const s = E.createRun(SETUP, 9, { scenarios: [] });
   s.rng = () => 0.99;
-  const eraOne = SCEN('a', 1), eraFour = SCEN('d', 4);
-  s.queue = [eraOne, eraFour];
-  s.turn = 12; // beginTurn increments to 13 -> era 4
+  const year2026 = SCEN('a', 2026), year2029 = SCEN('d', 2029);
+  s.queue = [year2026, year2029];
+  s.turn = 12; // beginTurn increments to 13 -> 2029
   const card = E.beginTurn(s, CONTENT0);
-  eq(card.id, 'd', 'era-4 card drawn ahead of era-1 leftover');
-  eq(s.queue.map(x => x.id), ['a'], 'era-1 leftover remains in queue');
+  eq(card.id, 'd', '2029 card drawn ahead of 2026 leftover');
+  eq(s.queue.map(x => x.id), ['a'], '2026 leftover remains in queue');
+});
+
+t('beginTurn: wildcard (yearless) card drawn before stale leftovers', () => {
+  const s = E.createRun(SETUP, 9, { scenarios: [] });
+  s.rng = () => 0.99;
+  const year2026 = SCEN('a', 2026), wildcard = SCEN('w');
+  s.queue = [year2026, wildcard];
+  s.turn = 8; // beginTurn increments to 9 -> 2028, no 2028 cards in queue
+  const card = E.beginTurn(s, CONTENT0);
+  eq(card.id, 'w', 'wildcard drawn ahead of stale 2026 leftover');
+  eq(s.queue.map(x => x.id), ['a'], '2026 leftover remains in queue');
 });
 
 t('pickHeadline picks by rival band', () => {
@@ -210,7 +221,7 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
     ok(s.title && s.text !== undefined, s.id + ': needs title/text');
     ok(isEvent ? Array.isArray(s.results) : s.options.length >= 1,
        s.id + ': needs options (1+) or, for event cards, its own results');
-    ok(s.trigger || (s.era >= 1 && s.era <= 4), s.id + ': bad era');
+    ok(s.trigger || s.year === undefined || (s.year >= 2026 && s.year <= 2029), s.id + ': bad year');
     if (!isEvent) {
       ok(s.options.some(o => !o.requires), s.id + ': at least one ungated option');
       for (const o of s.options)
@@ -228,8 +239,8 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
       }
     }
   }
-  for (let era = 1; era <= 4; era++)
-    ok(CONTENT.SCENARIOS.filter(s => s.era === era).length >= 2, 'era ' + era + ' needs 2+ scenarios');
+  for (let year = 2026; year <= 2029; year++)
+    ok(CONTENT.SCENARIOS.filter(s => s.year === year).length >= 2, 'year ' + year + ' needs 2+ scenarios');
   ok(CONTENT.SCENARIOS.length >= 15, 'need a full 15-turn deck (turn 16 is the endgame)');
 });
 
@@ -264,7 +275,7 @@ if (REPORTS_ARR) t('REPORTS: 3 entries, afterTurn 4/8/12, events(state) is non-e
 });
 
 t('beginTurn: endgame wins over a hot tripwire at turn 16', () => {
-  const tw = { id: 'tw-always', era: 0, trigger: { trust: { below: 100 } }, title: 'T', text: '',
+  const tw = { id: 'tw-always', trigger: { trust: { below: 100 } }, title: 'T', text: '',
     options: [{ label: 'x', results: [{ text: 'x', effects: {} }] }] };
   const endgame = { id: 'endgame', title: 'Choose a Path', text: '', options: [] };
   const s = E.createRun(SETUP, 9, { scenarios: [] });
@@ -320,6 +331,28 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
   ok(deathPct >= 0.20 && deathPct <= 0.45, 'deaths should be 20-45% of runs, got ' + (deathPct * 100).toFixed(1) + '%');
   ok(winPct >= 0.01 && winPct <= 0.08, 'true wins (plan-d-needle + plan-a-nick-of-time) should be 1-8%, got ' + (winPct * 100).toFixed(1) + '%');
   ok(planEndingsSeen.size >= 4, 'expected at least 4 distinct plan endings, got ' + planEndingsSeen.size + ': ' + [...planEndingsSeen].join(','));
+});
+
+if (CONTENT && ENDINGS_MAP) t('no card id is ever drawn twice within a single run (60 seeds)', () => {
+  const SETS = (typeof SETUPS !== 'undefined') ? SETUPS : require('./scenarios.js').SETUPS;
+  const content = { scenarios: CONTENT.SCENARIOS, tripwires: CONTENT.TRIPWIRES,
+                    headlines: CONTENT.HEADLINES, endgame: CONTENT.ENDGAME };
+  for (const setup of SETS) for (let seed = 1; seed <= 20; seed++) {
+    const st = E.createRun(setup, seed, content);
+    const seen = new Set();
+    let guard = 0;
+    while (!E.isOver(st) && guard++ < 20) {
+      const card = E.beginTurn(st, content);
+      if (!card) break;
+      ok(!seen.has(card.id), card.id + ' drawn twice in one run (setup ' + setup.id + ', seed ' + seed + ')');
+      seen.add(card.id);
+      if (!card.options) { E.resolveOption(st, card); continue; } // event card: no options, walk its own results
+      const open = card.options.filter(o => E.meetsRequires(o.requires, st));
+      if (!open.length) break;
+      E.resolveOption(st, open[Math.floor(st.rng() * open.length)]);
+    }
+    ok(guard < 20, 'run did not terminate');
+  }
 });
 
 console.log(pass + ' passed, ' + fail + ' failed');
