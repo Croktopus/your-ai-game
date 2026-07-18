@@ -58,7 +58,7 @@ const SCENARIOS = [
       { label: 'Coerce a break-in at the Chinese lab',
         results: [
           { text: "Your fixer gets the weights and the training recipe both. An investigative reporter gets the security footage. The head start is real, and the internal chaos over the leak buys you a few quiet months where their own roadmap slips.",
-            effects: { money: 2, trueCapability: 5, rivals: -3, trust: -1, political: -1, human: -1 } } ] },
+            effects: { money: 2, trueCapability: 7, rivals: -3, trust: -1, political: -1, human: -1 } } ] },
       { label: 'Push the team through a brutal crunch',
         results: [
           { text: 'Free food, mandatory-optional weekends, a bonus pool for anyone still standing in March. The gap closes a little. So does something in the team that does not reopen easily.',
@@ -116,7 +116,7 @@ const SCENARIOS = [
       { label: 'Buy a billboard suite to display a message during the broadcast',
         results: [
           { text: "A single line of text, timed perfectly against the rival's ad break, on every screen in the stadium. It costs a fortune and photographs beautifully.",
-            effects: { trust: 1 } } ] },
+            effects: { trust: 1, money: -1 } } ] },
       { label: 'Ignore it and keep shipping',
         results: [
           { text: 'You spend Sunday in a product review instead of a green room. The actual roadmap moves forward. Nobody outside the building notices, which is sort of the problem.',
@@ -152,7 +152,7 @@ const SCENARIOS = [
       { label: 'Stay and comply',
         results: [
           { text: 'The assessments take a full quarter to write and cost more than anyone budgeted. Regulators cite you, approvingly, as the model other companies should follow.',
-            effects: { political: 1, trust: 1 } } ] },
+            effects: { political: 1, trust: 1, money: -1 } } ] },
       { label: 'Fund a repeal proposition and lobby hard',
         results: [
           { chance: 0.25,
@@ -290,7 +290,7 @@ const SCENARIOS = [
             text: "The allocation memo leaks in Pam's own doc history — she forgot to strip the metadata. \"Collusion\" leads every business section for a month, and the DOJ opens a file with both your names on it.",
             effects: { compute: 2, political: -3, trust: -3 } },
           { text: "Lonnie's allocation quietly evaporates into a rounding error neither of you has to explain. You didn't need to say it out loud. That was rather the point.",
-            effects: { compute: 2, rivals: -2, political: -1 } } ] },
+            effects: { compute: 2, rivals: -2, political: -1, trueAlignment: -1 } } ] },
       { label: 'Propose a capabilities lottery — winner takes sixty percent',
         results: [
           { chance: 0.5,
@@ -347,7 +347,7 @@ const SCENARIOS = [
     options: [
       { label: 'Settle immediately, whatever it takes',
         results: [
-          { if: { money: { below: 5 } }, chance: 0.5,
+          { if: { money: { below: 7 } }, chance: 0.5,
             text: "The settlement number is bigger than what's left in the account. Payroll bounces before the ink is dry, and the board dissolves the company rather than sign the next check.",
             effects: { money: -3, trust: -2 }, gameOver: 'neuro-lawsuit' },
           { text: "You clear out the reserve to make it go away. It works, technically — the doors stay open, barely, and everyone who sued you no longer works anywhere near you.",
@@ -496,7 +496,7 @@ const SCENARIOS = [
             text: 'Two labs get caught faking their own compliance reports days apart. For a week the story is "everyone lied" — including, unfairly, you.',
             effects: { trust: -2, trueAlignment: 1, money: -1 } },
           { text: "The treaty mostly holds. Burning a quarter's capital on safety instead of scale costs you the leaderboard. For once, at least, nobody's lying about why.",
-            effects: { trust: 2, trueAlignment: 1, rivals: -1 } } ] },
+            effects: { trust: 2, trueAlignment: 1, money: -1, trueCapability: -1 } } ] },
       { label: 'Sign publicly, keep building in secret',
         results: [
           { chance: 0.35,
