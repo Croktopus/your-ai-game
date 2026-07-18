@@ -177,5 +177,47 @@ t('isOver and judgeEnding matrix', () => {
   eq(E.judgeEnding(s), 'riots', 'explicit ending wins');
 });
 
+// Content validation — run only when real content is loadable (node or tests.html).
+let CONTENT = null;
+try { CONTENT = (typeof SCENARIOS !== 'undefined') ? { SCENARIOS, TRIPWIRES, HEADLINES } : require('./scenarios.js'); } catch (e) {}
+let ENDINGS_MAP = null;
+try { ENDINGS_MAP = (typeof ENDINGS !== 'undefined') ? ENDINGS : require('./endings.js').ENDINGS; } catch (e) {}
+
+const STAT_KEYS = ['money','compute','trust','political','human','data',
+  'perceivedAlignment','trueAlignment','perceivedCapability','trueCapability'];
+const VISIBLE_KEYS = ['money','compute','trust','political','human','data'];
+
+if (CONTENT && ENDINGS_MAP) t('content validation', () => {
+  const all = [...CONTENT.SCENARIOS, ...CONTENT.TRIPWIRES];
+  const ids = new Set();
+  for (const s of all) {
+    ok(!ids.has(s.id), 'duplicate id ' + s.id); ids.add(s.id);
+    const isEvent = !s.options;
+    ok(s.title && s.text !== undefined, s.id + ': needs title/text');
+    ok(isEvent ? Array.isArray(s.results) : s.options.length >= 1,
+       s.id + ': needs options (1+) or, for event cards, its own results');
+    ok(s.trigger || (s.era >= 1 && s.era <= 4), s.id + ': bad era');
+    if (!isEvent) {
+      ok(s.options.some(o => !o.requires), s.id + ': at least one ungated option');
+      for (const o of s.options)
+        if (o.requires) for (const k of Object.keys(o.requires))
+          ok(VISIBLE_KEYS.includes(k), s.id + ': gate on hidden stat ' + k);
+    }
+    const walks = isEvent ? [s.results] : s.options.map(o => o.results);
+    for (const results of walks) {
+      const last = results[results.length - 1];
+      ok(!last.if && last.chance === undefined, s.id + ': last result must be unconditional');
+      for (const r of results) {
+        if (r.effects) for (const k of Object.keys(r.effects))
+          ok(STAT_KEYS.includes(k) || k === 'rivals', s.id + ': unknown effect key ' + k);
+        if (r.gameOver) ok(ENDINGS_MAP[r.gameOver], s.id + ': missing ending ' + r.gameOver);
+      }
+    }
+  }
+  for (let era = 1; era <= 4; era++)
+    ok(CONTENT.SCENARIOS.filter(s => s.era === era).length >= 2, 'era ' + era + ' needs 2+ scenarios');
+  ok(CONTENT.SCENARIOS.length >= 10, 'need a full 10-turn deck');
+});
+
 console.log(pass + ' passed, ' + fail + ' failed');
 if (typeof process !== 'undefined' && fail) process.exit(1);
