@@ -90,8 +90,9 @@
 
 <div id="setup-screen" class="screen center">
   <h1>YOUR-AI</h1>
-  <p class="sub">It is January 2026. You are Mario, CEO of Your-AI. Ten decisions stand between
-     you and the end of 2027. The race does not wait. Choose how your company was built:</p>
+  <p class="sub">It is January 2026. You are Mario, CEO of Your-AI. Sixteen quarters stand between
+     you and the end of 2029 — when someone has to choose America's path. The race does not wait.
+     Choose how your company was built:</p>
   <div id="setup-cards"></div>
   <p class="sub" style="margin-top:24px">seed: <input id="seed-input" class="mono" size="8"
      style="background:var(--bg);color:var(--text);border:1px solid var(--line);padding:2px 6px"></p>
@@ -131,7 +132,8 @@
 const CONTENT = { scenarios: SCENARIOS, tripwires: TRIPWIRES, headlines: HEADLINES };
 const VISIBLE = [['money','Money'],['compute','Compute'],['trust','Trust'],
   ['political','Political'],['human','Talent'],['data','Data']];
-const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027'];
+const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027',
+  'Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029'];
 const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
 

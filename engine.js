@@ -1,6 +1,6 @@
 // engine.js — pure game logic. No DOM. Deterministic given (setup, seed, choices).
 const Engine = (() => {
-  const TURNS = 8;
+  const TURNS = 16;
   const BURN = 1;                    // money lost per turn tick
   const CLAMPS = {
     money: [0, 10], compute: [0, 10], trust: [0, 10],
@@ -18,7 +18,7 @@ const Engine = (() => {
     };
   }
 
-  function eraForTurn(turn) { return Math.ceil(turn / 2); }
+  function eraForTurn(turn) { return Math.ceil(turn / 4); }
 
   function shuffle(arr, rng) {
     const a = arr.slice();
@@ -110,6 +110,7 @@ const Engine = (() => {
       state.rivals[r] += 1 + (state.rng() < 0.1 ? 1 : 0);
     state.headline = pickHeadline(state, content.headlines);
     if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
+    if (state.turn === TURNS) return content.endgame || null;
     const tw = content.tripwires.find(t =>
       !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
     if (tw) { state.firedTripwires.push(tw.id); return tw; }

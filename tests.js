@@ -23,8 +23,9 @@ t('rng is deterministic for same seed', () => {
   ok(E.mulberry32(42)() !== E.mulberry32(43)(), 'different seeds differ');
 });
 
-t('eraForTurn maps 8 turns onto 4 eras', () => {
-  eq([1,2,3,4,5,6,7,8].map(E.eraForTurn), [1,1,2,2,3,3,4,4]);
+t('eraForTurn maps 16 turns onto 4 eras (years)', () => {
+  eq([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].map(E.eraForTurn),
+     [1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4]);
 });
 
 t('buildQueue orders by era, shuffles within era by seed', () => {
@@ -154,7 +155,7 @@ t('beginTurn: era-aware draw prefers current era over older leftovers', () => {
   s.rng = () => 0.99;
   const eraOne = SCEN('a', 1), eraFour = SCEN('d', 4);
   s.queue = [eraOne, eraFour];
-  s.turn = 6; // beginTurn increments to 7 -> era 4
+  s.turn = 12; // beginTurn increments to 13 -> era 4
   const card = E.beginTurn(s, CONTENT0);
   eq(card.id, 'd', 'era-4 card drawn ahead of era-1 leftover');
   eq(s.queue.map(x => x.id), ['a'], 'era-1 leftover remains in queue');
