@@ -1,7 +1,8 @@
 // engine.js — pure game logic. No DOM. Deterministic given (setup, seed, choices).
 const Engine = (() => {
-  const TURNS = 8;
-  const BURN = 1;                    // money lost per turn tick
+  const TURNS = 16;
+  const ERAS = 8;
+  const BURN = 1;                    // money lost on the first turn of each era
   const CLAMPS = {
     money: [0, 10], compute: [0, 10], trust: [0, 10],
     political: [0, 10], human: [0, 10], data: [0, 10],
@@ -31,7 +32,7 @@ const Engine = (() => {
 
   function buildQueue(scenarios, rng) {
     const q = [];
-    for (let era = 1; era <= 4; era++)
+    for (let era = 1; era <= ERAS; era++)
       q.push(...shuffle(scenarios.filter(s => s.era === era), rng));
     return q;
   }
@@ -42,6 +43,7 @@ const Engine = (() => {
       seed, rng, turn: 0,
       stats: Object.assign({}, setup.stats),
       rivals: { pam: 4, lonnie: 3 },
+      flags: {},
       queue: buildQueue(content.scenarios, rng),
       firedTripwires: [], ending: null, headline: null,
     };
@@ -67,6 +69,19 @@ const Engine = (() => {
     return Object.entries(req).every(([key, min]) => getStat(state, key) >= min);
   }
 
+  function checkFlags(required, state) {
+    if (!required) return true;
+    return Object.entries(required).every(([key, expected]) => {
+      const actual = state.flags[key];
+      return Array.isArray(expected) ? expected.includes(actual) : actual === expected;
+    });
+  }
+
+  function applyFlags(state, flags) {
+    if (!flags) return;
+    Object.assign(state.flags, flags);
+  }
+
   function applyEffects(state, effects) {
     if (!effects) return;
     for (const [key, delta] of Object.entries(effects)) {
@@ -81,19 +96,23 @@ const Engine = (() => {
     }
   }
 
-  function fireResult(state, r) {
+  function fireResult(state, r, optionFlags) {
     applyEffects(state, r.effects);
+    applyFlags(state, optionFlags);
+    applyFlags(state, r.setFlags);
     if (r.gameOver) state.ending = r.gameOver;
+    else if (state.stats.money <= 0) state.ending = 'bankrupt';
     return r;
   }
 
   function resolveOption(state, option) {
     for (const r of option.results) {
       if (!checkCondition(r.if, state)) continue;
+      if (!checkFlags(r.ifFlags, state)) continue;
       if (r.chance !== undefined && state.rng() >= r.chance) continue;
-      return fireResult(state, r);
+      return fireResult(state, r, option.setFlags);
     }
-    return fireResult(state, option.results[option.results.length - 1]);
+    return fireResult(state, option.results[option.results.length - 1], option.setFlags);
   }
 
   function pickHeadline(state, headlines) {
@@ -105,19 +124,19 @@ const Engine = (() => {
 
   function beginTurn(state, content) {
     state.turn++;
-    applyEffects(state, { money: -BURN });
-    for (const r of Object.keys(state.rivals))
-      state.rivals[r] += 1 + (state.rng() < 0.1 ? 1 : 0);
+    if (state.turn % 2 === 1) {
+      applyEffects(state, { money: -BURN });
+      for (const r of Object.keys(state.rivals))
+        state.rivals[r] += 1 + (state.rng() < 0.1 ? 1 : 0);
+    }
     state.headline = pickHeadline(state, content.headlines);
     if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
     const tw = content.tripwires.find(t =>
       !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
     if (tw) { state.firedTripwires.push(tw.id); return tw; }
     const era = eraForTurn(state.turn);
-    let idx = state.queue.findIndex(s => s.era === era);
-    if (idx === -1) idx = state.queue.findIndex(s => s.era < era);
-    if (idx === -1) idx = 0;
-    return state.queue.splice(idx, 1)[0] || null;
+    const idx = state.queue.findIndex(s => s.era === era);
+    return idx === -1 ? null : state.queue.splice(idx, 1)[0];
   }
 
   function isOver(state) {
@@ -137,6 +156,8 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, ERAS, BURN, mulberry32, eraForTurn, shuffle, buildQueue, createRun,
+    getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags,
+    resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

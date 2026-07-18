@@ -1,5 +1,7 @@
 # Your-AI Roguelite Prototype Implementation Plan
 
+> **Historical implementation artifact — superseded.** This file records the original 2026–2027 build plan and intentionally preserves its old task text. Do not use its turn counts, era mapping, card schema, or balance values. The implemented 2026–2029 design is in [`../../design/prototype-design.md`](../../design/prototype-design.md), and current authoring rules are in [`../../../SCENARIO_GUIDE.md`](../../../SCENARIO_GUIDE.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A no-build-step browser roguelite where you play Mario, CEO of Your-AI, making 10 squeezed decisions across 2026–2027 while hidden alignment decays and rival labs race ahead.

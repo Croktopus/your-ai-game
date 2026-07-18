@@ -1,7 +1,9 @@
 # AI Lab CEO Roguelite — Prototype Design
 
+> **Superseded specification.** This document describes the original 10-turn prototype. The implemented 16-turn, evidence-backed design is in [`../../design/prototype-design.md`](../../design/prototype-design.md); the evidence audit is in [`../../research/scenario-evidence-dossier.md`](../../research/scenario-evidence-dossier.md).
+
 **Date:** 2026-07-18
-**Status:** Approved design, pre-implementation
+**Status:** Superseded by the implemented 2026–2029 design
 **Working title:** *Your-AI* (also the player company's name)
 
 ## Purpose

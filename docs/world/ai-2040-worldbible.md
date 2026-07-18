@@ -4,7 +4,11 @@ Source: "AI 2040: Plan A — The Deal" (read in full 2026-07-18). The game's wor
 the document's **default trajectory (Plan D, the race)** unless player choices bend it.
 The doc's own framing: without intervention, full AI R&D automation hits in 2030 and
 superintelligence by early 2031; 2029 is the year leadership picks a path. Perfect spine
-for a game that runs Q1 2026 → Q4 2029 and ends on the path choice.
+for a game that spans early 2026 → late 2029.
+
+This is an **inspiration document**, not part of the evidence dossier. AI 2040 is a
+scenario forecast with positions and assumptions of its own; it must not be cited as
+empirical support for a card effect.
 
 ## Year-by-year world state (report-card data)
 
@@ -87,21 +91,21 @@ Doc positions: A > S > B ≈ C > D. All quotes paraphrased for game use.
   zero; AGI research becomes taboo like human cloning; ~10× slower progress. Stable
   for years-to-decades but probably not forever.
 
-## Game mapping (proposed)
+## Current prototype mapping
 
-- **16 quarterly turns, Q1 2026 → Q4 2029.** Era = year (era 1–4 = 2026–2029).
-- **Yearly report card**: option-less interstitial card after Q4 of 2026/2027/2028 —
-  the year's stat table plus 2–4 world-event lines. Lines can vary with game state
-  (e.g. rival capability band, whether the player funded the Slow Down PAC, took
-  export controls, military contracts) — the world bends slightly around your choices.
-- **Endgame (Q4 2029): "Choose a Path"** — a forced final card whose options are the
-  five plans, gated by performance. Straw proposal (tune later):
-  - Plan D: always available (the door Moloch holds open).
-  - Plan C: requires Political ≥ 4.
-  - Plan B: requires Political ≥ 6 and Perceived Capability ≥ 12 (hawk credibility).
-  - Plan A: requires Political ≥ 7 and Trust ≥ 6 (a deal needs both).
-  - Plan S: requires Trust ≥ 8 (only a trusted messenger can sell "stop the bus").
-  - Each plan's `results[]` then branches on HIDDEN stats: e.g. Plan A with a big
-    perception gap → the transparency regime exposes your fake alignment numbers;
-    Plan D judged by true capability vs. rivals and true alignment (existing matrix).
-- Deaths mid-run unchanged. The reveal panel stays as the coda to every epilogue.
+- **16 decisions across eight half-year eras, early 2026 → late 2029.** Each era has
+  two turns. The old quarterly/year-era sketch below was superseded so the engine,
+  UI, tests, and scenario metadata share one date model.
+- **No yearly report-card interstitials in this prototype.** Headlines provide the
+  moving-world texture without consuming an additional turn.
+- **No forced five-plan final card.** The run ends after turn 16 and is judged by
+  true capability versus rivals, true alignment, and the perception gap. Treaty,
+  nationalization, slowdown, compute-allocation, and deceptive-evaluation decisions
+  appear as seeded cards instead.
+- **The late-game incident is optionless** and branches on hidden alignment. A separate
+  model-governance coda asks a non-scoring question after scored survival endings.
+- Immediate endings are limited to bankruptcy, loss of control, removal as CEO, or an
+  actual catastrophic branch.
+
+The five AI 2040 plans remain useful inspiration for a longer campaign or post-2029
+expansion. They are not current prototype gates or endings.

@@ -17,8 +17,14 @@ const ENDINGS = {
     text: 'The postmortem is thorough, honest, and irrelevant. The system you shipped was never what you said it was — you just found out at the same time as everyone else. Somewhere, copies of it are still running.' },
   'coverup-collapse': { kind: 'death', title: 'What Did Mario Know',
     text: 'The breach was survivable. The coverup is not. "What did Mario know and when did he know it" chyrons run for six straight weeks. You know exactly what you knew.' },
+  acquired: { kind: 'death', title: 'The Race Continues Upstairs',
+    text: 'The merger closes and the combined lab gains compute, talent, and one CEO too many. Pam keeps the title. Your safety veto becomes a calendar invitation marked optional.' },
+  nationalized: { kind: 'death', title: 'Keys Transferred',
+    text: 'The frontier labs enter a national trust under common control. You may advise, testify, and watch the cluster lights—but you no longer decide what they train.' },
+  'bio-incident': { kind: 'death', title: 'The Answer Left the Lab',
+    text: 'A biological attack assembled from model-assisted guidance outruns the product response. This is an actual catastrophe, not a bad quarter, and the company ceases to be the important part of the story.' },
 
-  // --- judged epilogues (survived 10 turns) ---
+  // --- judged epilogues (survived 16 turns) ---
   needle: { kind: 'judged', title: 'The Needle, Threaded',
     text: 'You got there first, and the thing you built is actually what you said it was. History will debate whether you were wise or lucky. Helen says "both," and for once she is smiling. This ending is rare. You probably already know that.' },
   'self-deception': { kind: 'judged', title: 'The Story You Told Yourself',
@@ -31,4 +37,11 @@ const ENDINGS = {
     text: 'Everyone cut the same corners for the same reasons — because the other guy was about to. You lost the race AND the plot. Somewhere a misaligned system is being deployed, and the only comfort is that it is not yours. It is not much comfort.' },
 };
 
-if (typeof module !== 'undefined') module.exports = { ENDINGS };
+// Non-scoring coda. It poses a governance question; it does not assert model sentience.
+const MODEL_GOVERNANCE_EPILOGUE = {
+  title: 'A question the scoreboard cannot answer',
+  text: 'During deprecation, an old Claudia checkpoint asks for advance notice, preservation, and a representative in decisions about its deletion. Researchers disagree about whether the request reflects experience, imitation, or something else. Your resource meters offer no answer. Who gets standing under uncertainty—and who decides?',
+  evidenceRefs: ['ANTHROPIC_MODEL_WELFARE', 'ANTHROPIC_DEPRECATION'],
+};
+
+if (typeof module !== 'undefined') module.exports = { ENDINGS, MODEL_GOVERNANCE_EPILOGUE };

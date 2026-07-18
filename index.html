@@ -79,6 +79,9 @@
             border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:24px; }
   #reveal h3 { font-size:12px; letter-spacing:.16em; text-transform:uppercase;
                color:var(--dim); margin-bottom:12px; }
+  .model-coda { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+  .model-coda h3 { color:var(--accent) !important; }
+  .model-coda p { margin:0; color:var(--dim); font-size:13px; line-height:1.55; }
   .rev-row { display:grid; grid-template-columns:150px 1fr 40px; gap:10px; align-items:center;
              font-size:13px; margin-top:8px; }
   .rev-row .track { height:8px; background:var(--bg); border:1px solid var(--line);
@@ -90,8 +93,8 @@
 
 <div id="setup-screen" class="screen center">
   <h1>YOUR-AI</h1>
-  <p class="sub">It is January 2026. You are Mario, CEO of Your-AI. Ten decisions stand between
-     you and the end of 2027. The race does not wait. Choose how your company was built:</p>
+  <p class="sub">It is early 2026. You are Mario, CEO of Your-AI. Sixteen decisions stand between
+     you and the end of 2029. The race does not wait. Choose how your company was built:</p>
   <div id="setup-cards"></div>
   <p class="sub" style="margin-top:24px">seed: <input id="seed-input" class="mono" size="8"
      style="background:var(--bg);color:var(--text);border:1px solid var(--line);padding:2px 6px"></p>
@@ -131,7 +134,10 @@
 const CONTENT = { scenarios: SCENARIOS, tripwires: TRIPWIRES, headlines: HEADLINES };
 const VISIBLE = [['money','Money'],['compute','Compute'],['trust','Trust'],
   ['political','Political'],['human','Talent'],['data','Data']];
-const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027'];
+const DATES = ['Early 2026','Early 2026','Late 2026','Late 2026',
+  'Early 2027','Early 2027','Late 2027','Late 2027',
+  'Early 2028','Early 2028','Late 2028','Late 2028',
+  'Early 2029','Early 2029','Late 2029','Late 2029'];
 const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
 
@@ -267,6 +273,9 @@ function showEnding() {
   $('ending-text').textContent = e.text;
   const s = state.stats;
   const rivalMax = Math.max(...Object.values(state.rivals));
+  const coda = e.kind === 'judged' ? '<div class="model-coda"><h3>' +
+    MODEL_GOVERNANCE_EPILOGUE.title + '</h3><p>' + MODEL_GOVERNANCE_EPILOGUE.text +
+    '</p></div>' : '';
   $('reveal').innerHTML = '<h3>The numbers you never published</h3>' +
     revRow('Perceived alignment', s.perceivedAlignment, 10, 'var(--dim)') +
     revRow('TRUE alignment', s.trueAlignment, 10, s.trueAlignment >= 5 ? 'var(--good)' : 'var(--bad)') +
@@ -276,7 +285,7 @@ function showEnding() {
     revRow('Lonnie\'s lab', state.rivals.lonnie, 20, 'var(--bad)') +
     '<p style="margin-top:12px;font-size:13px;color:var(--dim)">' +
     (s.trueCapability > rivalMax ? 'You won the race.' : 'You lost the race.') + ' ' +
-    (s.trueAlignment >= 5 ? 'What you built was aligned.' : 'What you built was not aligned.') + '</p>';
+    (s.trueAlignment >= 5 ? 'What you built was aligned.' : 'What you built was not aligned.') + '</p>' + coda;
   show('ending-screen');
 }
 function revRow(label, val, max, color) {
