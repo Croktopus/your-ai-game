@@ -18,6 +18,14 @@ Target audience (from brainstorm): gen pop (understanding), AI optimists (persua
 
 The player is always **Mario, CEO of Your-AI** (Dario analogue). Cast from brainstorm: Pam (OpenAI analogue), Lonnie (X-AI analogue), Helen (head of safety), Ronald Pumps (government AI office), Frances (CSO). Tone: darkly satirical but grounded.
 
+> **Design revision (2026-07-18, post-implementation):** timeline is now **Q1 2026 → Q4 2029,
+> 16 quarterly turns**, with the world following ai-2040.com's default (Plan D) trajectory —
+> see `docs/world/ai-2040-worldbible.md`. Yearly report-card interstitials show world state
+> after 2026/2027/2028 (no turn cost). Turn 16 is a forced **"Choose a Path"** endgame card:
+> the five AI-2040 plans as options gated by visible performance, with outcomes branching on
+> hidden stats. The original judged-epilogue matrix remains as death/fallback handling.
+> Paragraphs below describe the original 10-turn prototype design.
+
 ## Run structure
 
 - Timeline: **2026–2027, 10 turns** (5 choices per year).
