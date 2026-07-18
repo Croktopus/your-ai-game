@@ -41,7 +41,7 @@ const Engine = (() => {
     return {
       seed, rng, turn: 0,
       stats: Object.assign({}, setup.stats),
-      rivals: { pam: 5, lonnie: 4 },
+      rivals: { pam: 4, lonnie: 3 },
       queue: buildQueue(content.scenarios, rng),
       firedTripwires: [], ending: null, headline: null,
     };
@@ -106,7 +106,7 @@ const Engine = (() => {
     state.turn++;
     applyEffects(state, { money: -BURN });
     for (const r of Object.keys(state.rivals))
-      state.rivals[r] += 1 + (state.rng() < 0.3 ? 1 : 0);
+      state.rivals[r] += 1 + (state.rng() < 0.1 ? 1 : 0);
     state.headline = pickHeadline(state, content.headlines);
     if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
     const tw = content.tripwires.find(t =>

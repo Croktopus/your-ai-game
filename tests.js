@@ -39,7 +39,7 @@ t('createRun copies setup stats (no shared reference)', () => {
   const st = E.createRun(SETUP, 1, { scenarios: [] });
   st.stats.money = 0;
   eq(SETUP.stats.money, 5, 'setup untouched');
-  eq(st.turn, 0); eq(st.rivals, { pam: 5, lonnie: 4 }); eq(st.ending, null);
+  eq(st.turn, 0); eq(st.rivals, { pam: 4, lonnie: 3 }); eq(st.ending, null);
 });
 
 function mkState() {
@@ -53,7 +53,7 @@ t('checkCondition below/atLeast/rivalMax, empty passes', () => {
   ok(E.checkCondition({ trust: { below: 6 } }, s));
   ok(!E.checkCondition({ trust: { below: 5 } }, s), '5 is not below 5');
   ok(E.checkCondition({ trust: { atLeast: 5 } }, s));
-  ok(E.checkCondition({ rivalMax: { atLeast: 5 } }, s), 'pam starts at 5');
+  ok(E.checkCondition({ rivalMax: { atLeast: 4 } }, s), 'pam starts at 4');
   ok(!E.checkCondition({ trust: { atLeast: 5, below: 5 } }, s), 'all clauses must hold');
 });
 
@@ -68,7 +68,7 @@ t('applyEffects clamps and handles rivals key', () => {
   const s = mkState();
   E.applyEffects(s, { money: -99, trueCapability: 99, rivals: -2 });
   eq(s.stats.money, 0); eq(s.stats.trueCapability, 20);
-  eq(s.rivals, { pam: 3, lonnie: 2 });
+  eq(s.rivals, { pam: 2, lonnie: 1 });
   E.applyEffects(s, { rivals: -99 });
   eq(s.rivals, { pam: 0, lonnie: 0 }, 'rivals floor at 0');
   E.applyEffects(s, undefined); // no-op, must not throw
@@ -124,7 +124,7 @@ t('beginTurn ticks burn, rivals, turn; draws from queue', () => {
   s.rng = () => 0.99; // no rival bonus; headline pool empty
   const card = E.beginTurn(s, CONTENT0);
   eq(s.turn, 1); eq(s.stats.money, 4);
-  eq(s.rivals, { pam: 6, lonnie: 5 });
+  eq(s.rivals, { pam: 5, lonnie: 4 });
   eq(card.id, 'a');
   eq(E.beginTurn(s, CONTENT0), null, 'queue empty -> null');
 });
@@ -217,6 +217,30 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
   for (let era = 1; era <= 4; era++)
     ok(CONTENT.SCENARIOS.filter(s => s.era === era).length >= 2, 'era ' + era + ' needs 2+ scenarios');
   ok(CONTENT.SCENARIOS.length >= 10, 'need a full 10-turn deck');
+});
+
+if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endings', () => {
+  const SETS = (typeof SETUPS !== 'undefined') ? SETUPS : require('./scenarios.js').SETUPS;
+  const content = { scenarios: CONTENT.SCENARIOS, tripwires: CONTENT.TRIPWIRES,
+                    headlines: CONTENT.HEADLINES };
+  const tally = {};
+  for (const setup of SETS) for (let seed = 1; seed <= 50; seed++) {
+    const st = E.createRun(setup, seed, content);
+    let guard = 0;
+    while (!E.isOver(st) && guard++ < 20) {
+      const card = E.beginTurn(st, content);
+      if (!card) break;
+      if (!card.options) { E.resolveOption(st, card); continue; } // event card: no options, walk its own results
+      const open = card.options.filter(o => E.meetsRequires(o.requires, st));
+      ok(open.length > 0, card.id + ': all options gated at ' + JSON.stringify(st.stats));
+      E.resolveOption(st, open[Math.floor(st.rng() * open.length)]);
+    }
+    ok(guard < 20, 'run did not terminate');
+    const end = E.judgeEnding(st);
+    ok(ENDINGS_MAP[end], 'unknown ending: ' + end);
+    tally[end] = (tally[end] || 0) + 1;
+  }
+  console.log('  ending distribution:', JSON.stringify(tally));
 });
 
 console.log(pass + ' passed, ' + fail + ' failed');
