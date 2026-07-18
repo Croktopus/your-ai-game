@@ -95,6 +95,43 @@ const Engine = (() => {
     return fireResult(state, option.results[option.results.length - 1]);
   }
 
-  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption };
+  function pickHeadline(state, headlines) {
+    const m = Math.max(...Object.values(state.rivals));
+    const pool = headlines.filter(h => m >= h.min && m < h.max);
+    if (!pool.length) return '';
+    return pool[Math.floor(state.rng() * pool.length)].text;
+  }
+
+  function beginTurn(state, content) {
+    state.turn++;
+    applyEffects(state, { money: -BURN });
+    for (const r of Object.keys(state.rivals))
+      state.rivals[r] += 1 + (state.rng() < 0.3 ? 1 : 0);
+    state.headline = pickHeadline(state, content.headlines);
+    if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
+    const tw = content.tripwires.find(t =>
+      !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
+    if (tw) { state.firedTripwires.push(tw.id); return tw; }
+    return state.queue.shift() || null;
+  }
+
+  function isOver(state) {
+    return !!state.ending || state.turn >= TURNS;
+  }
+
+  function judgeEnding(state) {
+    if (state.ending) return state.ending;
+    const s = state.stats;
+    const beat = s.trueCapability > Math.max(...Object.values(state.rivals));
+    const aligned = s.trueAlignment >= 5;
+    const gapLarge = (s.perceivedAlignment - s.trueAlignment) >= 3;
+    if (beat && aligned) return 'needle';
+    if (beat && gapLarge) return 'self-deception';
+    if (beat) return 'eyes-open';
+    if (aligned) return 'righteous-loser';
+    return 'race-to-bottom';
+  }
+
+  return { TURNS, mulberry32, eraForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

@@ -117,5 +117,65 @@ t('event cards: resolveOption works on an option-less card with its own results'
   eq(s2.ending, 'dead');
 });
 
+const CONTENT0 = { scenarios: [], tripwires: [], headlines: [] };
+
+t('beginTurn ticks burn, rivals, turn; draws from queue', () => {
+  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 1)] });
+  s.rng = () => 0.99; // no rival bonus; headline pool empty
+  const card = E.beginTurn(s, CONTENT0);
+  eq(s.turn, 1); eq(s.stats.money, 4);
+  eq(s.rivals, { pam: 6, lonnie: 5 });
+  eq(card.id, 'a');
+  eq(E.beginTurn(s, CONTENT0), null, 'queue empty -> null');
+});
+
+t('beginTurn: bankruptcy ends the run before any card', () => {
+  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 1)] });
+  s.stats.money = 1; s.rng = () => 0.99;
+  eq(E.beginTurn(s, CONTENT0), null);
+  eq(s.ending, 'bankrupt');
+});
+
+t('beginTurn: tripwire interrupts the deck, fires once', () => {
+  const tw = { id: 'riots', era: 0, trigger: { trust: { below: 1 } }, title: 'Riots', text: '',
+    options: [{ label: 'x', results: [{ text: 'x', effects: { trust: 2 } }] }] };
+  const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 1), SCEN('b', 1)] });
+  s.stats.trust = 0; s.rng = () => 0.99;
+  const content = { scenarios: [], tripwires: [tw], headlines: [] };
+  eq(E.beginTurn(s, content).id, 'riots');
+  eq(s.firedTripwires, ['riots']);
+  s.stats.trust = 0; // still zero, but tripwire already fired
+  const next = E.beginTurn(s, content);
+  ok(next.id === 'a' || next.id === 'b', 'draws from deck, does not re-fire tripwire');
+});
+
+t('pickHeadline picks by rival band', () => {
+  const s = mkState(); s.rng = () => 0.0;
+  const hl = [{ min: 0, max: 8, text: 'low' }, { min: 8, max: 99, text: 'high' }];
+  eq(E.pickHeadline(s, hl), 'low');
+  s.rivals.pam = 9;
+  eq(E.pickHeadline(s, hl), 'high');
+  eq(E.pickHeadline(s, []), '');
+});
+
+t('isOver and judgeEnding matrix', () => {
+  const s = mkState();
+  ok(!E.isOver(s));
+  s.turn = 10; ok(E.isOver(s));
+  s.rivals = { pam: 8, lonnie: 6 };
+  s.stats.trueCapability = 9; s.stats.trueAlignment = 6; s.stats.perceivedAlignment = 7;
+  eq(E.judgeEnding(s), 'needle');
+  s.stats.trueAlignment = 3; s.stats.perceivedAlignment = 7;
+  eq(E.judgeEnding(s), 'self-deception');
+  s.stats.perceivedAlignment = 4;
+  eq(E.judgeEnding(s), 'eyes-open');
+  s.stats.trueCapability = 7; s.stats.trueAlignment = 6;
+  eq(E.judgeEnding(s), 'righteous-loser');
+  s.stats.trueAlignment = 2;
+  eq(E.judgeEnding(s), 'race-to-bottom');
+  s.ending = 'riots';
+  eq(E.judgeEnding(s), 'riots', 'explicit ending wins');
+});
+
 console.log(pass + ' passed, ' + fail + ' failed');
 if (typeof process !== 'undefined' && fail) process.exit(1);
