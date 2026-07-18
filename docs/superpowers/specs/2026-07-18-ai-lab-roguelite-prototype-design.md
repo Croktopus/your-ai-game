@@ -80,6 +80,7 @@ All content in `scenarios.js`; teammates author scenarios by copying a template 
 ```
 
 - `results[]` supports: `if` (conditions on any visible or hidden stat), `chance` (0–1, seeded roll), `effects` (deltas on any stat incl. hidden), `text`, optional `gameOver` (ending id). This covers both **random loss states** and **losses triggered by current capability/alignment levels** — the same choice can be safe for a careful lab and fatal for a corner-cutting one, invisibly.
+- **Event cards (option-less scenarios):** a scenario may omit `options` and carry its own `results[]`, walked the same way when the player hits Continue. Used for narrative beats and events that just *happen* — including instant game-overs judged against current hidden stats (e.g. a deployment incident that is catastrophic only if true alignment has decayed). Scenarios with a single option are also legal (forced choices).
 - **Trip wires** use the same scenario format plus a `trigger` condition field (e.g. `{ trust: { below: 1 } }`); they interrupt instead of being drawn. Initial set from brainstorm: Trust ≤ 0 → Riots; Perceived Capability high → military-use pressure; Political Capital and Perceived Alignment both low → imposed compute caps.
 - Prototype content target: **~10 deck scenarios + 3–4 trip wires**, seeded from the brainstorm list (espionage, podcast, PR framing, hiring, PAC funding, funding round, nationalization debate, cyberattack, board coup, competitor release).
 

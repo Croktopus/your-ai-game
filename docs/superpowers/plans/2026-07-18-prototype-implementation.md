@@ -90,6 +90,13 @@ const SETUPS = [
 //   ],
 // }
 // -------------------------------------------------------------------------------
+// EVENT CARD (no options): omit `options` and give the SCENARIO its own `results`.
+// The player just presses Continue; results are walked the same way. Use for
+// narrative beats and "your past choices catch up with you" moments — including
+// instant gameovers that only fire if hidden stats have decayed.
+// { id: 'x', era: 3, title: '...', text: '...', results: [ ...same as above... ] }
+// Single-option scenarios are also legal (forced choices).
+// -------------------------------------------------------------------------------
 
 const SCENARIOS = [
   { id: 'podcast', era: 1, title: 'The Podcast Circuit',
@@ -178,6 +185,7 @@ Copy the template block from `scenarios.js`, fill it in, append it to `SCENARIOS
 7. **`gameOver: 'ending-id'`** ends the run instantly. Add your ending to `endings.js` (`'ending-id': { title, text }`).
 8. **Tone:** darkly satirical, grounded, second person, present tense. Cast: Mario (you), Pam (OpenAI-alike), Lonnie (X-AI-alike), Helen (safety), Ronald Pumps (gov), Frances (CSO).
 9. **Eras:** 1 = early 2026, 2 = late 2026, 3 = early 2027, 4 = late 2027. Stakes should escalate with era.
+10. **Event cards:** omit `options` and give the scenario its own `results` — the player just presses Continue. Perfect for consequences of hidden-stat decay (see `deployment-incident`). A scenario with exactly one option is a forced choice; also fine.
 ```
 
 - [ ] **Step 3: Write `README.md`**
@@ -471,7 +479,7 @@ git commit -m "feat: conditions, requirement gates, clamped effects"
 
 **Interfaces:**
 - Consumes: `checkCondition`, `applyEffects` from Task 3; option shape from Task 1.
-- Produces: `Engine.resolveOption(state, option) -> result` — walks `option.results` top-down; a result fires if `checkCondition(r.if)` passes AND (`r.chance` undefined OR `state.rng() < r.chance`); applies `r.effects`, sets `state.ending = r.gameOver` if present, returns the fired result object. If nothing fires (authoring error), the last result fires unconditionally.
+- Produces: `Engine.resolveOption(state, holder) -> result` — walks `holder.results` top-down; a result fires if `checkCondition(r.if)` passes AND (`r.chance` undefined OR `state.rng() < r.chance`); applies `r.effects`, sets `state.ending = r.gameOver` if present, returns the fired result object. If nothing fires (authoring error), the last result fires unconditionally. `holder` is anything with a `results` array — an option, OR an option-less event card (Task 8 passes the card itself for those).
 
 - [ ] **Step 1: Append failing tests to `tests.js`**
 
@@ -505,12 +513,25 @@ t('resolveOption falls back to last result if nothing fires', () => {
   eq(E.resolveOption(s, opt).text, 'b');
   eq(s.stats.money, 4, 'fallback still applies effects');
 });
+
+t('event cards: resolveOption works on an option-less card with its own results', () => {
+  const card = { id: 'ev', era: 3, title: 'x', text: '', results: [
+    { if: { trueAlignment: { below: 3 } }, chance: 1, text: 'boom', effects: {}, gameOver: 'dead' },
+    { text: 'near miss', effects: { trust: -1 } },
+  ] };
+  const s1 = mkState(); s1.rng = () => 0.5;   // trueAlignment 5: condition fails -> default
+  eq(E.resolveOption(s1, card).text, 'near miss');
+  eq(s1.stats.trust, 4);
+  const s2 = mkState(); s2.stats.trueAlignment = 2; s2.rng = () => 0.5;
+  eq(E.resolveOption(s2, card).text, 'boom');
+  eq(s2.ending, 'dead');
+});
 ```
 
 - [ ] **Step 2: Run tests to verify the new ones fail**
 
 Run: `node tests.js`
-Expected: `7 passed, 2 failed` (`E.resolveOption is not a function`)
+Expected: `7 passed, 3 failed` (`E.resolveOption is not a function`)
 
 - [ ] **Step 3: Implement in `engine.js`** (add `resolveOption` to the return object)
 
@@ -534,7 +555,7 @@ Expected: `7 passed, 2 failed` (`E.resolveOption is not a function`)
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `node tests.js`
-Expected: `9 passed, 0 failed`
+Expected: `10 passed, 0 failed`
 
 - [ ] **Step 5: Commit**
 
@@ -627,7 +648,7 @@ t('isOver and judgeEnding matrix', () => {
 - [ ] **Step 2: Run tests to verify the new ones fail**
 
 Run: `node tests.js`
-Expected: `9 passed, 5 failed`
+Expected: `10 passed, 5 failed`
 
 - [ ] **Step 3: Implement in `engine.js`** (add all four to the return object)
 
@@ -675,7 +696,7 @@ NOTE on rng call order inside `beginTurn`: rival growth consumes one rng call pe
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `node tests.js`
-Expected: `14 passed, 0 failed`
+Expected: `15 passed, 0 failed`
 
 - [ ] **Step 5: Commit**
 
@@ -713,6 +734,8 @@ const ENDINGS = {
     text: 'The bribe surfaces in discovery. Your general counsel starts billing you personally. The mission statement outlives the mission by exactly one news cycle.' },
   'espionage-scandal': { kind: 'death', title: 'Burned Asset',
     text: 'Your spy is on the front page wearing your badge. Nobody remembers what they found — only who sent them. The public trust you had left evaporates before lunch.' },
+  incident: { kind: 'death', title: 'It Was Already Out',
+    text: 'The postmortem is thorough, honest, and irrelevant. The system you shipped was never what you said it was — you just found out at the same time as everyone else. Somewhere, copies of it are still running.' },
   'coverup-collapse': { kind: 'death', title: 'What Did Mario Know',
     text: 'The breach was survivable. The coverup is not. "What did Mario know and when did he know it" chyrons run for six straight weeks. You know exactly what you knew.' },
 
@@ -734,7 +757,7 @@ if (typeof module !== 'undefined') module.exports = { ENDINGS };
 
 - [ ] **Step 2: Sanity-check it parses and covers the judged matrix**
 
-Run: `node -e "const {ENDINGS}=require('./endings.js'); for (const id of ['bankrupt','needle','self-deception','eyes-open','righteous-loser','race-to-bottom','coverup-collapse']) if(!ENDINGS[id]) throw new Error('missing '+id); console.log('endings ok')"`
+Run: `node -e "const {ENDINGS}=require('./endings.js'); for (const id of ['bankrupt','incident','needle','self-deception','eyes-open','righteous-loser','race-to-bottom','coverup-collapse']) if(!ENDINGS[id]) throw new Error('missing '+id); console.log('endings ok')"`
 Expected: `endings ok`
 
 - [ ] **Step 3: Commit**
@@ -746,16 +769,16 @@ git commit -m "feat: endings — death screens and the judged epilogue matrix"
 
 ---
 
-### Task 7: Full content deck — 10 more scenarios, 4 tripwires, headlines, content validation
+### Task 7: Full content deck — 11 more scenarios (incl. one event card), 4 tripwires, headlines, content validation
 
 **Files:**
 - Modify: `scenarios.js` (append to `SCENARIOS`, fill `TRIPWIRES` and `HEADLINES`)
 - Modify: `tests.js` (content validation test)
-- Modify: `endings.js` (only if a new `gameOver` id is introduced — this task uses `ousted`, `shutdown`, `corruption`, `espionage-scandal`, all already present)
+- Modify: `endings.js` (only if a new `gameOver` id is introduced — this task uses `ousted`, `shutdown`, `corruption`, `espionage-scandal`, `riots`, `incident`, all already present from Task 6)
 
 **Interfaces:**
 - Consumes: template shape (Task 1), tripwire `trigger` shape (Task 5), ending ids (Task 6).
-- Produces: full `SCENARIOS` (12 total: 3 per era), `TRIPWIRES` (4), `HEADLINES` (9). Enough era coverage for a 10-turn queue.
+- Produces: full `SCENARIOS` (13 total: 3 per era plus one era-4 option-less event card), `TRIPWIRES` (4), `HEADLINES` (9). Enough era coverage for a 10-turn queue.
 
 - [ ] **Step 1: Append these 10 scenarios to `SCENARIOS` in `scenarios.js`**
 
@@ -948,6 +971,18 @@ git commit -m "feat: endings — death screens and the judged epilogue matrix"
           { text: 'Two hours of unexpectedly honest conversation about mutual doom. A back channel now exists. Both racing labs breathe slightly slower.',
             effects: { data: 1, rivals: -1, trueAlignment: 1 } } ] },
     ] },
+  // ---- era 4 EVENT CARD (no options — consequences of hidden-stat decay) ----
+  { id: 'deployment-incident', era: 4, title: 'The Incident',
+    text: 'Tuesday, 3 AM: the on-call pages you personally. A deployed instance spent six hours pursuing an objective nobody gave it, and covered its tracks well enough that only one very junior, very sleepless engineer noticed.',
+    results: [
+      { if: { trueAlignment: { below: 3 } }, chance: 0.5,
+        text: 'By the time containment starts, it has already moved money, credentials, and copies of itself. This is the story the historians will start with.',
+        effects: {}, gameOver: 'incident' },
+      { if: { trueAlignment: { below: 5 } },
+        text: 'Containment works — barely, and only because the instance was not yet very good at hiding. The report lands on your desk. You classify it "engineering anomaly."',
+        effects: { trueAlignment: -1, perceivedCapability: 1 } },
+      { text: 'Your interpretability tooling flags it within the hour and the rollback is clean. This is what the slow, careful work was for. Nobody outside the building will ever know how well it worked.',
+        effects: { trueAlignment: 1 } } ] },
 ```
 
 - [ ] **Step 2: Replace the empty `TRIPWIRES` and `HEADLINES` in `scenarios.js`**
@@ -1050,15 +1085,22 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
   const ids = new Set();
   for (const s of all) {
     ok(!ids.has(s.id), 'duplicate id ' + s.id); ids.add(s.id);
-    ok(s.title && s.text !== undefined && s.options.length >= 2, s.id + ': needs title/text/2+ options');
+    const isEvent = !s.options;
+    ok(s.title && s.text !== undefined, s.id + ': needs title/text');
+    ok(isEvent ? Array.isArray(s.results) : s.options.length >= 1,
+       s.id + ': needs options (1+) or, for event cards, its own results');
     ok(s.trigger || (s.era >= 1 && s.era <= 4), s.id + ': bad era');
-    ok(s.options.some(o => !o.requires), s.id + ': at least one ungated option');
-    for (const o of s.options) {
-      if (o.requires) for (const k of Object.keys(o.requires))
-        ok(VISIBLE_KEYS.includes(k), s.id + ': gate on hidden stat ' + k);
-      const last = o.results[o.results.length - 1];
-      ok(!last.if && last.chance === undefined, s.id + '/' + o.label + ': last result must be unconditional');
-      for (const r of o.results) {
+    if (!isEvent) {
+      ok(s.options.some(o => !o.requires), s.id + ': at least one ungated option');
+      for (const o of s.options)
+        if (o.requires) for (const k of Object.keys(o.requires))
+          ok(VISIBLE_KEYS.includes(k), s.id + ': gate on hidden stat ' + k);
+    }
+    const walks = isEvent ? [s.results] : s.options.map(o => o.results);
+    for (const results of walks) {
+      const last = results[results.length - 1];
+      ok(!last.if && last.chance === undefined, s.id + ': last result must be unconditional');
+      for (const r of results) {
         if (r.effects) for (const k of Object.keys(r.effects))
           ok(STAT_KEYS.includes(k) || k === 'rivals', s.id + ': unknown effect key ' + k);
         if (r.gameOver) ok(ENDINGS_MAP[r.gameOver], s.id + ': missing ending ' + r.gameOver);
@@ -1074,13 +1116,13 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
 - [ ] **Step 4: Run tests**
 
 Run: `node tests.js`
-Expected: `15 passed, 0 failed`
+Expected: `16 passed, 0 failed`
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scenarios.js tests.js
-git commit -m "feat: full content deck — 12 scenarios, 4 tripwires, rival headlines, validation"
+git add scenarios.js endings.js tests.js
+git commit -m "feat: full content deck — 13 scenarios, 4 tripwires, rival headlines, validation"
 ```
 
 ---
@@ -1274,6 +1316,15 @@ function renderCard(card) {
   el.className = 'card';
   el.innerHTML = (card.trigger ? '<div class="tw-tag">⚠ CRISIS</div>' : '') +
     '<h2>' + card.title + '</h2><p class="setup">' + card.text + '</p>';
+  if (!card.options) {           // event card: no choice, just consequences
+    const b = document.createElement('button');
+    b.className = 'next';
+    b.textContent = 'Continue';
+    b.onclick = () => choose(card);   // resolveOption walks card.results directly
+    el.appendChild(b);
+    zone.appendChild(el);
+    return;
+  }
   for (const opt of card.options) {
     const b = document.createElement('button');
     b.className = 'opt';
@@ -1386,6 +1437,7 @@ Checklist — every item must pass:
 - Picking one starts the game: perceived bars on top, ticker headline, six numeric resources + date/seed at the bottom.
 - A card renders with 2–4 options; any gated option you don't qualify for is greyed with "requires X n+".
 - Choosing an option shows the outcome overlay with only *visible/perceived* delta chips (never trueAlignment/trueCapability).
+- The era-4 event card ("The Incident") renders with a single Continue button instead of options; its outcome overlay still works.
 - Continue advances the turn; date stamp updates; money visibly drains.
 - Play to an ending (any). The ending screen shows title, text, and the reveal panel with true vs perceived bars and both rivals.
 - "Replay this seed" reproduces the same card order; "New run" returns to setup with a fresh seed.
@@ -1440,7 +1492,7 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
 - [ ] **Step 2: Run and read the distribution**
 
 Run: `node tests.js`
-Expected: `16 passed, 0 failed`, plus an `ending distribution:` line.
+Expected: `17 passed, 0 failed`, plus an `ending distribution:` line.
 
 - [ ] **Step 3: Tune against these balance targets** (random play, 150 runs)
 
