@@ -57,6 +57,15 @@
   #board .legend { display:inline-block; margin:0 8px; font-size:10px; color:var(--dim); }
   #board .legend b { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px;
     vertical-align:middle; }
+  /* forks: short gold SPEED spur vs longer dashed-green SAFE detour */
+  #board .fork-speed { stroke:var(--gold); fill:var(--gold); stroke-width:2.5; stroke-linecap:round; opacity:.55; }
+  #board .fork-safe  { stroke:var(--good); fill:none; stroke-width:2.5; stroke-linecap:round;
+    stroke-dasharray:4 3; opacity:.55; }
+  #board .fork-speed.lit { opacity:1; filter:drop-shadow(0 0 4px var(--gold)); }
+  #board .fork-safe.lit  { opacity:1; filter:drop-shadow(0 0 4px var(--good)); }
+  #board text.fork-label { font:bold 8px Consolas,Menlo,monospace; letter-spacing:.06em; opacity:.7; }
+  #board text.fork-label.speed { fill:var(--gold); }
+  #board text.fork-label.safe  { fill:var(--good); }
 
   /* card */
   #card-zone { flex:1; display:flex; align-items:center; justify-content:center; padding:24px; }
@@ -174,6 +183,7 @@
     <svg id="board-svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid meet">
       <path class="road-edge" d="M 50,35 H 900 Q 970,35 970,67.5 Q 970,100 900,100 H 100 Q 30,100 30,132.5 Q 30,165 100,165 H 935"></path>
       <path id="road-path" class="road" d="M 50,35 H 900 Q 970,35 970,67.5 Q 970,100 900,100 H 100 Q 30,100 30,132.5 Q 30,165 100,165 H 935"></path>
+      <g id="board-forks"></g>
       <g id="board-spaces"></g>
       <g id="board-finish"></g>
       <g id="board-tokens">
@@ -239,7 +249,7 @@ const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2
   'Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029'];
 const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
-let activeKeyMap = {}, cardLocked = false;
+let activeKeyMap = {}, cardLocked = false, currentCard = null;
 
 function show(id) {
   for (const s of ['setup-screen','game-screen','report-screen','ending-screen']) $(s).hidden = (s !== id);
@@ -276,6 +286,7 @@ function nextTurn() {
 }
 
 function renderCard(card) {
+  currentCard = card;
   const zone = $('card-zone');
   zone.innerHTML = '';
   const el = document.createElement('div');
@@ -345,6 +356,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 function choose(opt) {
+  // On a funding turn, light the fork branch the player's pick takes this year.
+  if (currentCard && /^funding-/.test(currentCard.id) && currentCard.options) {
+    const idx = currentCard.options.indexOf(opt);
+    lightFork(currentCard.year, idx === 0 ? 'speed' : idx === 1 ? 'safe' : 'both');
+  }
   const before = snapshot();
   const result = Engine.resolveOption(state, opt);
   renderHUD();
@@ -424,6 +440,19 @@ function renderHUD() {
 
 // ---- board: a winding road; a piece's distance along it = its capability (0 .. ASI_CAP) ----
 const SVGNS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs, text) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+// Light the branch the player's funding pick took this year (speed / safe / both).
+function lightFork(year, which) {
+  document.querySelectorAll('[data-fork$="-' + year + '"]').forEach(el => {
+    const isSpeed = el.getAttribute('data-fork').indexOf('speed') === 0;
+    el.classList.toggle('lit', which === 'both' || (which === 'speed') === isSpeed);
+  });
+}
 function renderBoard() {
   const path = document.getElementById('road-path');
   const L = path.getTotalLength();
@@ -450,6 +479,26 @@ function renderBoard() {
     ft.setAttribute('text-anchor', 'middle'); ft.setAttribute('dominant-baseline', 'central');
     ft.textContent = 'ASI';
     fg.appendChild(fc); fg.appendChild(ft);
+
+    // Forks at the funding milestones: a short SPEED spur vs a longer SAFE detour.
+    const YRS = { 1: 2026, 5: 2027, 9: 2028, 13: 2029 };
+    const forkG = document.getElementById('board-forks');
+    Object.keys(YRS).forEach(k => {
+      const i = +k, yr = YRS[i];
+      const at = L * i / N, p = path.getPointAtLength(at), q = path.getPointAtLength(Math.min(L, at + 2));
+      let tx = q.x - p.x, ty = q.y - p.y; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+      const nx = -ty, ny = tx;                                  // path normal
+      const sx = p.x + tx * 42, sy = p.y + ty * 42;             // spur tip
+      forkG.appendChild(svg('line', { x1: p.x, y1: p.y, x2: sx, y2: sy, class: 'fork-speed', 'data-fork': 'speed-' + yr }));
+      const a = 6;                                              // arrowhead
+      forkG.appendChild(svg('polygon', { class: 'fork-speed', 'data-fork': 'speed-' + yr,
+        points: [sx + tx * a, sy + ty * a, sx - nx * a * 0.7, sy - ny * a * 0.7, sx + nx * a * 0.7, sy + ny * a * 0.7].join(' ') }));
+      const bdir = p.y > 100 ? -1 : 1;                          // detour bulges toward board center
+      const cx = p.x + tx * 21, cy = p.y + 42 * bdir;           // safe bulge control pt
+      forkG.appendChild(svg('path', { d: 'M ' + p.x + ',' + p.y + ' Q ' + cx + ',' + cy + ' ' + sx + ',' + sy, class: 'fork-safe', 'data-fork': 'safe-' + yr }));
+      forkG.appendChild(svg('text', { x: sx + tx * 8 - 5, y: sy + ty * 8 - 3, class: 'fork-label speed' }, 'SPEED'));
+      forkG.appendChild(svg('text', { x: cx - 8, y: cy + bdir * 9 + 3, class: 'fork-label safe' }, 'SAFE'));
+    });
   }
 
   placeToken('tok-player', state.stats.perceivedCapability / cap, 0, path, L);
