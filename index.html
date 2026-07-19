@@ -374,8 +374,8 @@ function choose(opt) {
   $('overlay').hidden = false;
 }
 
-const SHOWN_DELTAS = VISIBLE.concat([['perceivedAlignment','Perceived Align'],
-  ['perceivedCapability','Perceived Cap']]);
+const SHOWN_DELTAS = VISIBLE.concat([['perceivedAlignment','Alignment'],
+  ['perceivedCapability','Capability']]);
 function snapshot() {
   const o = {};
   for (const [k] of SHOWN_DELTAS) o[k] = state.stats[k];
