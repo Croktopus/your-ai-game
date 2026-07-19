@@ -51,12 +51,9 @@
   #board .token.player { background:var(--accent); }
   #board .token.rival { background:var(--bad); }
   #board .token.rival.lonnie { background:#ff9d84; }
-  #board .lane.axis { height:16px; margin-top:2px; }
-  #board .axis-line { background:transparent; border:none; }
-  #board .axis-line .yr { position:absolute; top:0; transform:translateX(-50%); font-size:10px;
-    color:var(--dim); white-space:nowrap; }
-  #board .axis-line .yr:first-child { transform:translateX(0); }
-  #board .fork-note { margin-top:8px; font-size:11px; color:var(--dim); }
+  #board .axis-caption { margin-top:8px; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    text-align:center; color:var(--dim); }
+  #board .fork-note { margin-top:6px; font-size:11px; color:var(--dim); }
 
   /* card */
   #card-zone { flex:1; display:flex; align-items:center; justify-content:center; padding:24px; }
@@ -154,7 +151,7 @@
   </div>
   <div id="ticker"></div>
   <div id="board">
-    <div class="board-head"><span>Start — 2026</span><span class="finish-tag">ASI FINISH →</span></div>
+    <div class="board-head"><span>START</span><span class="finish-tag">ASI FINISH →</span></div>
     <div class="lanes">
       <div class="finish-line"></div>
       <div class="lane"><span class="lane-label">YOU</span>
@@ -163,14 +160,8 @@
         <div class="lane-line"><div class="token rival" id="tok-pam"></div></div></div>
       <div class="lane"><span class="lane-label">LONNIE</span>
         <div class="lane-line"><div class="token rival lonnie" id="tok-lonnie"></div></div></div>
-      <div class="lane axis"><span class="lane-label"></span>
-        <div class="lane-line axis-line">
-          <span class="yr" style="left:0%">2026</span>
-          <span class="yr" style="left:25%">2027</span>
-          <span class="yr" style="left:50%">2028</span>
-          <span class="yr" style="left:75%">2029</span>
-        </div></div>
     </div>
+    <p class="axis-caption">← nascent · capability · superintelligence →</p>
     <p class="fork-note">the short spur is capabilities-first; the long road is the aligned one — nobody has to tell you which one your funding picked</p>
   </div>
   <div id="card-zone"></div>
