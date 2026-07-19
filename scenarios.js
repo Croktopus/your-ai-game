@@ -597,7 +597,7 @@ const SCENARIOS = [
         ...evidence(['STANFORD_FMTI', 'FRONTIER_AI_AUDIT'], 'speculative',
           'Unverifiable counterclaims can attract capital temporarily while corroding shared information integrity industry-wide.'),
         results: [
-          { text: 'You go on stage and imply, carefully, without technically claiming, that you\'re further along than anyone knows. The stock jumps. So does the pressure to eventually be right about it.',
+          { text: 'You go on stage and imply, carefully, without technically claiming, that you\'re further along than anyone knows. The stock jumps. And somewhere, if Lambda is real, they just learned you\'re bluffing — and there is no reason left for them to go slow.',
             effects: { pCapRate: 0.5, money: 3, trust: 2, political: 1, tAlignRate: -0.5 } } ] },
       { label: 'Quietly coordinate a government seizure — "national security"',
         ...evidence(['OPENAI_GOV_SUPERINTELLIGENCE', 'FRONTIER_AI_AUDIT'], 'speculative',
