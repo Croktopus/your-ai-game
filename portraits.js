@@ -5,7 +5,7 @@
 // NOTE: fill in / verify CARD_PORTRAITS after the evidence-consolidation pass settles final card ids.
 
 const CHARACTERS = {
-  mario:          { name: 'Mario',        role: 'CEO, Your-AI',        img: 'portraits/mario.png' },          // player / CEO
+  mario:          { name: 'Mario',        role: 'CEO, Misanthropic',        img: 'portraits/mario.png' },          // player / CEO
   pam:            { name: 'Pam',          role: 'Leader of ClosedAI',  img: 'portraits/pam.png' },            // OpenAI-alike
   lonnie:         { name: 'Lonnie',       role: 'Leader of C_AI',      img: 'portraits/lonnie.png' },         // X-AI-alike
   helen:          { name: 'Helen',        role: 'Head of Safety',      img: 'portraits/helen.png' },          // head of safety

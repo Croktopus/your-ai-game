@@ -4,7 +4,7 @@ const ENDINGS = {
   bankrupt: { kind: 'death', title: 'Out of Runway',
     text: 'The last all-hands is held over a Zoom link nobody springs for the premium tier of. Pam acquires your team on Thursday, your name on Friday. The race continues without you.' },
   riots: { kind: 'death', title: 'The Crowd Outside',
-    text: 'They came for the datacenter first. Then the office. Helen resigns live on television. Your-AI ends not with a whimper but with a congressional subpoena.' },
+    text: 'They came for the datacenter first. Then the office. Helen resigns live on television. Misanthropic ends not with a whimper but with a congressional subpoena.' },
   ousted: { kind: 'death', title: 'Thanks, Board',
     text: 'The blackmail file was real. Unfortunately, so was theirs. Security walks you out with a box containing one plant and your Dwarkesh mug. The lab races on — without the guardrails you at least pretended to have.' },
   shutdown: { kind: 'death', title: 'Padlocked',

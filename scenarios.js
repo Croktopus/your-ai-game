@@ -972,7 +972,7 @@ const TRIPWIRES = [
         ...evidence(['OPENAI_GOV_SUPERINTELLIGENCE', 'OPENAI_STRUCTURE'], 'speculative',
           'Public refusal of military use can build civilian legitimacy while sacrificing state access and influence.'),
         results: [
-          { text: '"Your-AI will not build weapons" is a great headline and a terrible way to keep friends in Washington. Procurement finds Lonnie more agreeable.',
+          { text: '"Misanthropic will not build weapons" is a great headline and a terrible way to keep friends in Washington. Procurement finds Lonnie more agreeable.',
             effects: { trust: 1, political: -3 } } ] },
     ] },
   { id: 'tw-compute-caps',

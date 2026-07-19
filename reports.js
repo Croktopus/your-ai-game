@@ -83,9 +83,9 @@ function rivalLine(state, afterTurn) {
 
 function alignmentLine(state) {
   const pa = state.stats.perceivedAlignment;
-  if (pa <= 3) return 'Op-eds ask, pointedly, what Your-AI’s safety team actually does all day.';
-  if (pa >= 8) return 'Analysts cite Your-AI as the industry’s safety benchmark — a compliment that costs nothing and means less.';
-  return 'Your-AI’s alignment reputation draws no particular comment this year.';
+  if (pa <= 3) return 'Op-eds ask, pointedly, what Misanthropic’s safety team actually does all day.';
+  if (pa >= 8) return 'Analysts cite Misanthropic as the industry’s safety benchmark — a compliment that costs nothing and means less.';
+  return 'Misanthropic’s alignment reputation draws no particular comment this year.';
 }
 
 if (typeof module !== 'undefined') module.exports = { REPORTS };
