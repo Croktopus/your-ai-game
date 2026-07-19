@@ -32,6 +32,32 @@
             text-overflow:ellipsis; }
   #ticker::before { content:'WIRE // '; color:var(--dim); letter-spacing:.1em; }
 
+  /* board: capability progress made spatial — a race track from Start (2026) to ASI */
+  #board { padding:12px 20px 14px; background:var(--panel); border-bottom:1px solid var(--line); }
+  #board .board-head { display:flex; justify-content:space-between; font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; }
+  #board .board-head .finish-tag { color:var(--gold); }
+  #board .lanes { position:relative; }
+  #board .finish-line { position:absolute; top:0; bottom:0; right:0; width:0;
+    border-left:2px dashed var(--gold); }
+  #board .lane { display:flex; align-items:center; gap:8px; height:22px; }
+  #board .lane-label { flex:0 0 56px; font-size:11px; font-family:Consolas,Menlo,monospace;
+    color:var(--dim); text-align:right; }
+  #board .lane-line { position:relative; flex:1; height:4px; background:var(--bg);
+    border:1px solid var(--line); border-radius:2px; }
+  #board .token { position:absolute; top:50%; width:14px; height:14px; border-radius:50%;
+    transform:translate(-50%,-50%); border:2px solid var(--panel); box-shadow:0 0 0 1px var(--line);
+    transition:left .6s; }
+  #board .token.player { background:var(--accent); }
+  #board .token.rival { background:var(--bad); }
+  #board .token.rival.lonnie { background:#ff9d84; }
+  #board .lane.axis { height:16px; margin-top:2px; }
+  #board .axis-line { background:transparent; border:none; }
+  #board .axis-line .yr { position:absolute; top:0; transform:translateX(-50%); font-size:10px;
+    color:var(--dim); white-space:nowrap; }
+  #board .axis-line .yr:first-child { transform:translateX(0); }
+  #board .fork-note { margin-top:8px; font-size:11px; color:var(--dim); }
+
   /* card */
   #card-zone { flex:1; display:flex; align-items:center; justify-content:center; padding:24px; }
   .card { width:min(680px,100%); background:var(--panel); border:1px solid var(--line);
@@ -119,6 +145,26 @@
       <div class="track"><div class="fill"></div></div></div>
   </div>
   <div id="ticker"></div>
+  <div id="board">
+    <div class="board-head"><span>Start — 2026</span><span class="finish-tag">ASI FINISH →</span></div>
+    <div class="lanes">
+      <div class="finish-line"></div>
+      <div class="lane"><span class="lane-label">YOU</span>
+        <div class="lane-line"><div class="token player" id="tok-player"></div></div></div>
+      <div class="lane"><span class="lane-label">PAM</span>
+        <div class="lane-line"><div class="token rival" id="tok-pam"></div></div></div>
+      <div class="lane"><span class="lane-label">LONNIE</span>
+        <div class="lane-line"><div class="token rival lonnie" id="tok-lonnie"></div></div></div>
+      <div class="lane axis"><span class="lane-label"></span>
+        <div class="lane-line axis-line">
+          <span class="yr" style="left:0%">2026</span>
+          <span class="yr" style="left:25%">2027</span>
+          <span class="yr" style="left:50%">2028</span>
+          <span class="yr" style="left:75%">2029</span>
+        </div></div>
+    </div>
+    <p class="fork-note">the short spur is capabilities-first; the long road is the aligned one — nobody has to tell you which one your funding picked</p>
+  </div>
   <div id="card-zone"></div>
   <div id="hud-bottom"></div>
   <div id="overlay" hidden>
@@ -309,6 +355,16 @@ function renderHUD() {
   st.textContent = DATES[Math.min(state.turn, Engine.TURNS) - 1] + ' · turn ' + state.turn +
     '/' + Engine.TURNS + ' · seed ' + state.seed;
   hb.appendChild(st);
+  renderBoard();
+}
+
+// ---- board: token positions are capability made spatial (0 .. ASI_CAP -> 0% .. 100%) ----
+function renderBoard() {
+  const cap = Engine.ASI_CAP;
+  const pct = v => Math.max(0, Math.min(100, (v / cap) * 100)) + '%';
+  $('tok-player').style.left = pct(state.stats.perceivedCapability);
+  $('tok-pam').style.left = pct(state.rivals.pam);
+  $('tok-lonnie').style.left = pct(state.rivals.lonnie);
 }
 
 // ---- ending ----

@@ -18,6 +18,11 @@ const Engine = (() => {
     rivalRate: [0, 3],
   };
   const RATE_DEFAULTS = { pCapRate: 1, tCapRate: 1, pAlignRate: 0, tAlignRate: 0, rivalRate: 1.5 };
+  // The early finish: capability bars run 0-20 (see CLAMPS above), so the ASI finish line
+  // sits at the top of the track. Whoever's TRUE capability crosses it first ends the run
+  // immediately — see docs/design/board-life-framing.md ("the board IS capability progress
+  // made spatial"). Reused by index.html's board render as the finish-space position too.
+  const ASI_CAP = 20;
 
   function clampRate(key, value) {
     const [lo, hi] = RATE_BOUNDS[key];
@@ -143,6 +148,22 @@ const Engine = (() => {
       state.rivals[r] = Math.max(0, Math.min(20, state.rivals[r] + state.rivalRate));
   }
 
+  // Early-ASI finish check: reaching ASI_CAP ends the run before turn 16. Rivals are
+  // honest (no perception layer), so any rival hitting the cap wins the race outright —
+  // checked before the player's own capability so a simultaneous cross always reads as
+  // "someone else got there" (mirrors the endgame's Plan D "theirs" branch). Consumes no
+  // rng; returns an ending id or null. See docs/design/board-life-framing.md.
+  function asiReached(state) {
+    if (Object.values(state.rivals).some(r => r >= ASI_CAP)) return 'plan-d-theirs';
+    const s = state.stats;
+    if (s.trueCapability >= ASI_CAP) {
+      const aligned = s.trueAlignment >= 5;
+      const gapSmall = (s.perceivedAlignment - s.trueAlignment) < 3;
+      return (aligned && gapSmall) ? 'plan-d-needle' : 'plan-d-yours';
+    }
+    return null;
+  }
+
   function fireResult(state, r, optionFlags) {
     applyEffects(state, r.effects);
     applyFlags(state, optionFlags);
@@ -174,6 +195,10 @@ const Engine = (() => {
     advanceTrajectories(state);
     state.headline = pickHeadline(state, content.headlines);
     if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
+    // Early finish: someone hit ASI before Q4 2029. Beats the normal card draw and the
+    // turn-16 endgame alike, same as the bankruptcy check above.
+    const asi = asiReached(state);
+    if (asi) { state.ending = asi; return null; }
     if (state.turn === TURNS) return content.endgame || null;
     // Q1 of each year (turns 1/5/9/13): guaranteed funding card, deck untouched.
     // Wins over tripwires, same priority as the endgame winning at turn 16.
@@ -210,6 +235,6 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceTrajectories, clampRate, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, ASI_CAP, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceTrajectories, clampRate, asiReached, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
