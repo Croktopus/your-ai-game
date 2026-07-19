@@ -32,28 +32,31 @@
             text-overflow:ellipsis; }
   #ticker::before { content:'WIRE // '; color:var(--dim); letter-spacing:.1em; }
 
-  /* board: capability progress made spatial — a race track from Start (2026) to ASI */
-  #board { padding:12px 20px 14px; background:var(--panel); border-bottom:1px solid var(--line); }
+  /* board: capability progress made spatial — a winding Game-of-LIFE road to ASI */
+  #board { padding:10px 20px 12px; background:var(--panel); border-bottom:1px solid var(--line); }
   #board .board-head { display:flex; justify-content:space-between; font-size:11px;
-    letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; }
+    letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-bottom:4px; }
   #board .board-head .finish-tag { color:var(--gold); }
-  #board .lanes { position:relative; }
-  #board .finish-line { position:absolute; top:0; bottom:0; right:0; width:0;
-    border-left:2px dashed var(--gold); }
-  #board .lane { display:flex; align-items:center; gap:8px; height:22px; }
-  #board .lane-label { flex:0 0 56px; font-size:11px; font-family:Consolas,Menlo,monospace;
-    color:var(--dim); text-align:right; }
-  #board .lane-line { position:relative; flex:1; height:4px; background:var(--bg);
-    border:1px solid var(--line); border-radius:2px; }
-  #board .token { position:absolute; top:50%; width:14px; height:14px; border-radius:50%;
-    transform:translate(-50%,-50%); border:2px solid var(--panel); box-shadow:0 0 0 1px var(--line);
-    transition:left .6s; }
-  #board .token.player { background:var(--accent); }
-  #board .token.rival { background:var(--bad); }
-  #board .token.rival.lonnie { background:#ff9d84; }
-  #board .axis-caption { margin-top:8px; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  #board svg { width:100%; height:200px; display:block; overflow:visible; }
+  #board .road { fill:none; stroke:var(--bg); stroke-width:16; stroke-linecap:round; stroke-linejoin:round; }
+  #board .road-edge { fill:none; stroke:var(--line); stroke-width:18; stroke-linecap:round; stroke-linejoin:round; }
+  #board .space { fill:var(--panel); stroke:var(--line); stroke-width:1.5; }
+  #board .space.milestone { fill:var(--gold); stroke:var(--gold); }
+  #board .finish-flag circle { fill:var(--gold); }
+  #board .finish-flag text { fill:#04121f; font:bold 11px Consolas,Menlo,monospace; }
+  #board .token { transition:transform .7s cubic-bezier(.34,1.2,.4,1); }
+  #board .token circle { stroke:var(--panel); stroke-width:2; }
+  #board .token text { font:bold 9px Consolas,Menlo,monospace; text-anchor:middle;
+    dominant-baseline:central; fill:#04121f; }
+  #board .token.player circle { fill:var(--accent); }
+  #board .token.pam circle    { fill:var(--bad); }
+  #board .token.lonnie circle { fill:#ff9d84; }
+  #board .axis-caption { margin-top:2px; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
     text-align:center; color:var(--dim); }
-  #board .fork-note { margin-top:6px; font-size:11px; color:var(--dim); }
+  #board .fork-note { margin-top:4px; font-size:11px; color:var(--dim); text-align:center; }
+  #board .legend { display:inline-block; margin:0 8px; font-size:10px; color:var(--dim); }
+  #board .legend b { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px;
+    vertical-align:middle; }
 
   /* card */
   #card-zone { flex:1; display:flex; align-items:center; justify-content:center; padding:24px; }
@@ -167,18 +170,25 @@
   </div>
   <div id="ticker"></div>
   <div id="board">
-    <div class="board-head"><span>START</span><span class="finish-tag">ASI FINISH →</span></div>
-    <div class="lanes">
-      <div class="finish-line"></div>
-      <div class="lane"><span class="lane-label">YOU</span>
-        <div class="lane-line"><div class="token player" id="tok-player"></div></div></div>
-      <div class="lane"><span class="lane-label">PAM</span>
-        <div class="lane-line"><div class="token rival" id="tok-pam"></div></div></div>
-      <div class="lane"><span class="lane-label">LONNIE</span>
-        <div class="lane-line"><div class="token rival lonnie" id="tok-lonnie"></div></div></div>
-    </div>
+    <div class="board-head"><span>START — nascent capability</span><span class="finish-tag">ASI FINISH →</span></div>
+    <svg id="board-svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid meet">
+      <path class="road-edge" d="M 50,35 H 900 Q 970,35 970,67.5 Q 970,100 900,100 H 100 Q 30,100 30,132.5 Q 30,165 100,165 H 935"></path>
+      <path id="road-path" class="road" d="M 50,35 H 900 Q 970,35 970,67.5 Q 970,100 900,100 H 100 Q 30,100 30,132.5 Q 30,165 100,165 H 935"></path>
+      <g id="board-spaces"></g>
+      <g id="board-finish"></g>
+      <g id="board-tokens">
+        <g id="tok-lonnie" class="token lonnie"><circle r="8"></circle><text>L</text></g>
+        <g id="tok-pam" class="token pam"><circle r="8"></circle><text>P</text></g>
+        <g id="tok-player" class="token player"><circle r="9"></circle><text>Y</text></g>
+      </g>
+    </svg>
     <p class="axis-caption">← nascent · capability · superintelligence →</p>
-    <p class="fork-note">the short spur is capabilities-first; the long road is the aligned one — nobody has to tell you which one your funding picked</p>
+    <p class="fork-note">
+      <span class="legend"><b style="background:var(--accent)"></b>You</span>
+      <span class="legend"><b style="background:var(--bad)"></b>Pam</span>
+      <span class="legend"><b style="background:#ff9d84"></b>Lonnie</span>
+      — every quarter moves your piece down the road; nobody has to tell you which fork your funding picked
+    </p>
   </div>
   <div id="card-zone"></div>
   <div id="hud-bottom"></div>
@@ -412,13 +422,52 @@ function renderHUD() {
   renderBoard();
 }
 
-// ---- board: token positions are capability made spatial (0 .. ASI_CAP -> 0% .. 100%) ----
+// ---- board: a winding road; a piece's distance along it = its capability (0 .. ASI_CAP) ----
+const SVGNS = 'http://www.w3.org/2000/svg';
 function renderBoard() {
+  const path = document.getElementById('road-path');
+  const L = path.getTotalLength();
   const cap = Engine.ASI_CAP;
-  const pct = v => Math.max(0, Math.min(100, (v / cap) * 100)) + '%';
-  $('tok-player').style.left = pct(state.stats.perceivedCapability);
-  $('tok-pam').style.left = pct(state.rivals.pam);
-  $('tok-lonnie').style.left = pct(state.rivals.lonnie);
+
+  // Draw the spaces + finish flag once (16 spaces = the 16 quarters; funding quarters are milestones).
+  const spacesG = document.getElementById('board-spaces');
+  if (!spacesG.childNodes.length) {
+    const N = Engine.TURNS;
+    for (let i = 0; i <= N; i++) {
+      const p = path.getPointAtLength(L * i / N);
+      const c = document.createElementNS(SVGNS, 'circle');
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', 5);
+      c.setAttribute('class', 'space' + ([1, 5, 9, 13].includes(i) ? ' milestone' : ''));
+      spacesG.appendChild(c);
+    }
+    const end = path.getPointAtLength(L);
+    const fg = document.getElementById('board-finish');
+    fg.setAttribute('class', 'finish-flag');
+    const fc = document.createElementNS(SVGNS, 'circle');
+    fc.setAttribute('cx', end.x); fc.setAttribute('cy', end.y); fc.setAttribute('r', 13);
+    const ft = document.createElementNS(SVGNS, 'text');
+    ft.setAttribute('x', end.x); ft.setAttribute('y', end.y);
+    ft.setAttribute('text-anchor', 'middle'); ft.setAttribute('dominant-baseline', 'central');
+    ft.textContent = 'ASI';
+    fg.appendChild(fc); fg.appendChild(ft);
+  }
+
+  placeToken('tok-player', state.stats.perceivedCapability / cap, 0, path, L);
+  placeToken('tok-pam',    state.rivals.pam / cap,               1, path, L);
+  placeToken('tok-lonnie', state.rivals.lonnie / cap,          -1, path, L);
+}
+
+// Place a token piece at `frac` (0..1) along the road, nudged `off` (-1/0/1) along the
+// path normal so the three pieces sit side by side instead of stacking.
+function placeToken(id, frac, off, path, L) {
+  frac = Math.max(0, Math.min(1, frac || 0));
+  const at = frac * L;
+  const p = path.getPointAtLength(at);
+  const p2 = path.getPointAtLength(Math.min(L, at + 1));
+  const dx = p2.x - p.x, dy = p2.y - p.y, len = Math.hypot(dx, dy) || 1;
+  const x = p.x + (-dy / len) * off * 10;
+  const y = p.y + (dx / len) * off * 10;
+  document.getElementById(id).setAttribute('transform', 'translate(' + x + ',' + y + ')');
 }
 
 // ---- ending ----
