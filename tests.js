@@ -65,6 +65,80 @@ t('meetsRequires is atLeast semantics', () => {
   ok(!E.meetsRequires({ political: 6 }, s));
 });
 
+t('checkFlags: scalar equality, array membership, missing flag never matches', () => {
+  const s = mkState();
+  ok(E.checkFlags(undefined, s), 'undefined required passes');
+  ok(!E.checkFlags({ youthPolicy: 'dismissed' }, s), 'unset flag does not match scalar');
+  ok(!E.checkFlags({ youthPolicy: ['dismissed', 'settled'] }, s), 'unset flag does not match array');
+  s.flags.youthPolicy = 'dismissed';
+  ok(E.checkFlags({ youthPolicy: 'dismissed' }, s), 'scalar equality matches');
+  ok(!E.checkFlags({ youthPolicy: 'guardrails' }, s), 'scalar mismatch fails');
+  ok(E.checkFlags({ youthPolicy: ['dismissed', 'settled'] }, s), 'array membership matches');
+  ok(!E.checkFlags({ youthPolicy: ['guardrails', 'settled'] }, s), 'array without actual value fails');
+  s.flags.other = 'x';
+  ok(E.checkFlags({ youthPolicy: 'dismissed', other: 'x' }, s), 'multiple required keys all must match');
+  ok(!E.checkFlags({ youthPolicy: 'dismissed', other: 'y' }, s), 'one mismatched key fails the whole set');
+});
+
+t('applyFlags: merges into state.flags, persists, later calls overwrite same key', () => {
+  const s = mkState();
+  E.applyFlags(s, undefined); // no-op, must not throw
+  eq(s.flags, {});
+  E.applyFlags(s, { youthPolicy: 'guardrails' });
+  eq(s.flags, { youthPolicy: 'guardrails' });
+  E.applyFlags(s, { other: 'x' });
+  eq(s.flags, { youthPolicy: 'guardrails', other: 'x' }, 'accumulates across separate calls');
+  E.applyFlags(s, { youthPolicy: 'dismissed' });
+  eq(s.flags.youthPolicy, 'dismissed', 'later setFlags overwrites the same key');
+});
+
+t('resolveOption: option.setFlags and result.setFlags both apply, and persist turn to turn', () => {
+  const opt = { label: 'x', setFlags: { seen: 'yes' }, results: [
+    { text: 'a', effects: {}, setFlags: { youthPolicy: 'guardrails' } } ] };
+  const s = mkState();
+  E.resolveOption(s, opt);
+  eq(s.flags, { seen: 'yes', youthPolicy: 'guardrails' }, 'option-level and result-level setFlags both applied');
+  // Flags survive independently of turn/stat resets (simulate a later "turn").
+  s.turn++;
+  eq(s.flags.youthPolicy, 'guardrails', 'flag still readable on a later turn');
+});
+
+t('resolveOption: ifFlags gates a result; falls through to the unconditional last result otherwise', () => {
+  const opt = { label: 'x', results: [
+    { ifFlags: { youthPolicy: 'dismissed' }, text: 'harsh', effects: { trust: -4 } },
+    { ifFlags: { youthPolicy: ['guardrails', 'settled'] }, text: 'soft', effects: { trust: -1 } },
+    { text: 'default', effects: { trust: -2 } },
+  ] };
+  // No flag set at all -> falls through to the unconditional default.
+  const s0 = mkState();
+  eq(E.resolveOption(s0, opt).text, 'default');
+  eq(s0.stats.trust, 3);
+  // Flag set to a value matching the array branch.
+  const s1 = mkState(); s1.flags.youthPolicy = 'settled';
+  eq(E.resolveOption(s1, opt).text, 'soft');
+  eq(s1.stats.trust, 4);
+  // Flag set to the scalar branch's value.
+  const s2 = mkState(); s2.flags.youthPolicy = 'dismissed';
+  eq(E.resolveOption(s2, opt).text, 'harsh');
+  eq(s2.stats.trust, 1);
+  // Flag set to some unrelated value -> neither gated result matches, falls through.
+  const s3 = mkState(); s3.flags.youthPolicy = 'controls';
+  eq(E.resolveOption(s3, opt).text, 'default');
+});
+
+t('resolveOption: ifFlags combines with if/chance — all must pass', () => {
+  const opt = { label: 'x', results: [
+    { if: { trust: { below: 3 } }, ifFlags: { youthPolicy: 'dismissed' }, text: 'both', effects: {} },
+    { text: 'default', effects: {} },
+  ] };
+  const s1 = mkState(); s1.flags.youthPolicy = 'dismissed'; // flag matches, stat condition doesn't (trust=5)
+  eq(E.resolveOption(s1, opt).text, 'default');
+  const s2 = mkState(); s2.stats.trust = 2; // stat condition matches, flag doesn't
+  eq(E.resolveOption(s2, opt).text, 'default');
+  const s3 = mkState(); s3.stats.trust = 2; s3.flags.youthPolicy = 'dismissed'; // both match
+  eq(E.resolveOption(s3, opt).text, 'both');
+});
+
 t('applyEffects clamps and handles rivals key', () => {
   const s = mkState();
   E.applyEffects(s, { money: -99, trueCapability: 99, rivals: -2 });
@@ -72,7 +146,69 @@ t('applyEffects clamps and handles rivals key', () => {
   eq(s.rivals, { pam: 2, lonnie: 1 });
   E.applyEffects(s, { rivals: -99 });
   eq(s.rivals, { pam: 0, lonnie: 0 }, 'rivals floor at 0');
+  E.applyEffects(s, { rivals: 99 });
+  eq(s.rivals, { pam: 20, lonnie: 20 }, 'rivals cap at 20');
   E.applyEffects(s, undefined); // no-op, must not throw
+});
+
+t('applyEffects: rate keys modify the rate, floors/bounds re-applied', () => {
+  // Capability & rival rates floor at 0 — a big negative delta can slow them, never reverse.
+  const s = mkState(); // defaults: pCapRate/tCapRate 1, rivalRate 1.5, align rates 0
+  E.applyEffects(s, { pCapRate: -10, tCapRate: -10, rivalRate: -10 });
+  eq(s.stats.pCapRate, 0); eq(s.stats.tCapRate, 0); eq(s.rivalRate, 0);
+  // Capability rates are also bounded above at 3.
+  E.applyEffects(s, { pCapRate: 99, tCapRate: 99, rivalRate: 99 });
+  eq(s.stats.pCapRate, 3); eq(s.stats.tCapRate, 3); eq(s.rivalRate, 3);
+  // Alignment rates MAY go negative (bounded at -3..3, not floored at 0).
+  E.applyEffects(s, { pAlignRate: -1, tAlignRate: -2 });
+  eq(s.stats.pAlignRate, -1); eq(s.stats.tAlignRate, -2);
+  E.applyEffects(s, { pAlignRate: -10, tAlignRate: -10 });
+  eq(s.stats.pAlignRate, -3); eq(s.stats.tAlignRate, -3, 'alignment rates bounded at -3');
+});
+
+t('advanceTrajectories: bars move by their rates each turn, deterministically', () => {
+  const s = mkState();
+  s.stats.pCapRate = 2; s.stats.tCapRate = 1.5; s.stats.pAlignRate = -1; s.stats.tAlignRate = 0.5;
+  s.rivalRate = 2;
+  const before = s.rng; // capture identity: advance must not consume rng
+  let rngCalls = 0; s.rng = () => { rngCalls++; return 0.5; };
+  E.advanceTrajectories(s);
+  eq(rngCalls, 0, 'advancing trajectories consumes no rng (seed-reproducibility contract)');
+  eq(s.stats.perceivedCapability, 7); eq(s.stats.trueCapability, 6.5);
+  eq(s.stats.perceivedAlignment, 4); eq(s.stats.trueAlignment, 5.5);
+  eq(s.rivals, { pam: 6, lonnie: 5 });
+});
+
+t('advanceTrajectories: trueAlignment can decay under a negative tAlignRate', () => {
+  const s = mkState();
+  s.stats.tAlignRate = -2;
+  E.advanceTrajectories(s);
+  eq(s.stats.trueAlignment, 3, 'true alignment falls when its rate is negative');
+  s.stats.tAlignRate = -2;
+  E.advanceTrajectories(s);
+  eq(s.stats.trueAlignment, 1);
+});
+
+t('beginTurn: funding card served at turns 1/5/9/13, wins over a hot tripwire, deck untouched', () => {
+  const tw = { id: 'tw-always', trigger: { trust: { below: 100 } }, title: 'T', text: '',
+    options: [{ label: 'x', results: [{ text: 'x', effects: {} }] }] };
+  const funding = [
+    { id: 'funding-2026', year: 2026, title: 'F26', text: '', options: [{ label: 'x', results: [{ text: 'x', effects: { tCapRate: 1 } }] }] },
+    { id: 'funding-2027', year: 2027, title: 'F27', text: '', options: [{ label: 'x', results: [{ text: 'x', effects: { tCapRate: 1 } }] }] },
+  ];
+  const deckCard = SCEN('a', 2026);
+  const content = { scenarios: [deckCard], funding, tripwires: [tw], headlines: [] };
+  const s = E.createRun(SETUP, 9, content);
+  s.rng = () => 0.99;
+  const card = E.beginTurn(s, content);
+  eq(s.turn, 1);
+  eq(card.id, 'funding-2026', 'turn 1 serves the 2026 funding card, not the tripwire or deck');
+  eq(s.firedTripwires, [], 'the tripwire did not fire on a funding turn');
+  eq(s.queue.map(c => c.id), ['a'], 'the deck is untouched by a funding turn');
+  // Turn 5 -> 2027 funding card, same guarantee.
+  s.turn = 4;
+  const card2 = E.beginTurn(s, content);
+  eq(card2.id, 'funding-2027');
 });
 
 t('resolveOption: conditional first, chance roll, default fallthrough', () => {
@@ -122,10 +258,10 @@ const CONTENT0 = { scenarios: [], tripwires: [], headlines: [] };
 
 t('beginTurn ticks burn, rivals, turn; draws from queue', () => {
   const s = E.createRun(SETUP, 9, { scenarios: [SCEN('a', 2026)] });
-  s.rng = () => 0.99; // no rival bonus; headline pool empty
+  s.rng = () => 0.99; // headline pool empty; rival growth is rate-driven, no rng consumed
   const card = E.beginTurn(s, CONTENT0);
   eq(s.turn, 1); eq(s.stats.money, 4);
-  eq(s.rivals, { pam: 5, lonnie: 4 });
+  eq(s.rivals, { pam: 5.5, lonnie: 4.5 }, 'rivals advance by the default rivalRate (1.5)');
   eq(card.id, 'a');
   eq(E.beginTurn(s, CONTENT0), null, 'queue empty -> null');
 });
@@ -202,18 +338,21 @@ t('isOver and judgeEnding matrix', () => {
 
 // Content validation — run only when real content is loadable (node or tests.html).
 let CONTENT = null;
-try { CONTENT = (typeof SCENARIOS !== 'undefined') ? { SCENARIOS, TRIPWIRES, HEADLINES, ENDGAME } : require('./scenarios.js'); } catch (e) {}
+try { CONTENT = (typeof SCENARIOS !== 'undefined') ? { SCENARIOS, FUNDING, TRIPWIRES, HEADLINES, ENDGAME } : require('./scenarios.js'); } catch (e) {}
 let ENDINGS_MAP = null;
 try { ENDINGS_MAP = (typeof ENDINGS !== 'undefined') ? ENDINGS : require('./endings.js').ENDINGS; } catch (e) {}
 let REPORTS_ARR = null;
 try { REPORTS_ARR = (typeof REPORTS !== 'undefined') ? REPORTS : require('./reports.js').REPORTS; } catch (e) {}
 
 const STAT_KEYS = ['money','compute','trust','political','human','data',
-  'perceivedAlignment','trueAlignment','perceivedCapability','trueCapability'];
+  'perceivedAlignment','trueAlignment','perceivedCapability','trueCapability',
+  'pCapRate','tCapRate','pAlignRate','tAlignRate'];
 const VISIBLE_KEYS = ['money','compute','trust','political','human','data'];
 
 if (CONTENT && ENDINGS_MAP) t('content validation', () => {
-  const all = [...CONTENT.SCENARIOS, ...CONTENT.TRIPWIRES];
+  // FUNDING cards are guaranteed (not deck content) but share the same card shape and
+  // effect-key vocabulary, so they get the same structural checks as scenarios/tripwires.
+  const all = [...CONTENT.SCENARIOS, ...(CONTENT.FUNDING || []), ...CONTENT.TRIPWIRES];
   const ids = new Set();
   for (const s of all) {
     ok(!ids.has(s.id), 'duplicate id ' + s.id); ids.add(s.id);
@@ -234,14 +373,55 @@ if (CONTENT && ENDINGS_MAP) t('content validation', () => {
       ok(!last.if && last.chance === undefined, s.id + ': last result must be unconditional');
       for (const r of results) {
         if (r.effects) for (const k of Object.keys(r.effects))
-          ok(STAT_KEYS.includes(k) || k === 'rivals', s.id + ': unknown effect key ' + k);
+          ok(STAT_KEYS.includes(k) || k === 'rivals' || k === 'rivalRate', s.id + ': unknown effect key ' + k);
+        if (r.effects && (r.effects.trueCapability < 0 || r.effects.perceivedCapability < 0))
+          ok(false, s.id + ': negative direct-level capability effect — use tCapRate/pCapRate instead');
         if (r.gameOver) ok(ENDINGS_MAP[r.gameOver], s.id + ': missing ending ' + r.gameOver);
       }
     }
   }
+  // Deck-coverage math (post rate-model): turn 16 is the endgame, turns 1/5/9/13 are the
+  // guaranteed funding cards (never drawn from the deck) — so the deck only needs to cover
+  // 11 scenario turns: 3 each for 2026/2027/2028 (turns 2-4/6-8/10-12) and 2 for 2029
+  // (turns 14-15). Wildcards backfill any year short of its own dedicated cards, so the
+  // per-year minimum stays a loose safety margin rather than an exact match to turn count.
   for (let year = 2026; year <= 2029; year++)
     ok(CONTENT.SCENARIOS.filter(s => s.year === year).length >= 2, 'year ' + year + ' needs 2+ scenarios');
-  ok(CONTENT.SCENARIOS.length >= 15, 'need a full 15-turn deck (turn 16 is the endgame)');
+  ok(CONTENT.SCENARIOS.length >= 11, 'need enough deck cards for 11 scenario turns (16 - endgame - 4 funding)');
+});
+
+if (CONTENT) t('FUNDING: one guaranteed card per year, sets rate keys', () => {
+  ok(Array.isArray(CONTENT.FUNDING) && CONTENT.FUNDING.length === 4, 'expected 4 funding cards');
+  eq(CONTENT.FUNDING.map(f => f.year).sort(), [2026, 2027, 2028, 2029]);
+  const RATE_KEYS = ['pCapRate', 'tCapRate', 'pAlignRate', 'tAlignRate'];
+  for (const f of CONTENT.FUNDING) {
+    ok(f.options && f.options.length === 3, f.id + ': funding card needs 3 options');
+    for (const o of f.options) {
+      const effects = o.results[o.results.length - 1].effects;
+      ok(RATE_KEYS.some(k => effects[k] !== undefined), f.id + ' "' + o.label + '": should set a rate key');
+    }
+  }
+});
+
+if (CONTENT) t('youthPolicy flag chain: suicide-lawsuit sets it, 2+ later cards read it', () => {
+  const setter = CONTENT.SCENARIOS.find(s => s.id === 'suicide-lawsuit');
+  ok(setter, 'suicide-lawsuit card exists');
+  const setValues = setter.options.map(o => o.setFlags && o.setFlags.youthPolicy).filter(Boolean);
+  ok(setValues.length >= 2, 'suicide-lawsuit options set at least 2 distinct youthPolicy stances');
+  ok(setValues.includes('dismissed'), 'one stance is "dismissed"');
+
+  const readers = CONTENT.SCENARIOS.filter(s =>
+    s.options && s.options.some(o => o.results.some(r => r.ifFlags && r.ifFlags.youthPolicy)));
+  ok(readers.length >= 2, 'expected at least 2 later cards reading the youthPolicy flag, got ' + readers.length);
+  for (const card of readers) {
+    ok(card.year === 2028 || card.year === 2029, card.id + ': flag-reading card should be a later (2028/2029) year card');
+    for (const o of card.options) {
+      const gated = o.results.filter(r => r.ifFlags && r.ifFlags.youthPolicy);
+      if (!gated.length) continue;
+      const last = o.results[o.results.length - 1];
+      ok(!last.ifFlags, card.id + ' "' + o.label + '": last result must be the unconditional fallback, not ifFlags-gated');
+    }
+  }
 });
 
 if (CONTENT && ENDINGS_MAP && CONTENT.ENDGAME) t('endgame content validation', () => {
@@ -255,7 +435,7 @@ if (CONTENT && ENDINGS_MAP && CONTENT.ENDGAME) t('endgame content validation', (
     ok(!last.if && last.chance === undefined, 'endgame "' + o.label + '": last result must be unconditional');
     for (const r of o.results) {
       if (r.effects) for (const k of Object.keys(r.effects))
-        ok(STAT_KEYS.includes(k) || k === 'rivals', 'endgame "' + o.label + '": unknown effect key ' + k);
+        ok(STAT_KEYS.includes(k) || k === 'rivals' || k === 'rivalRate', 'endgame "' + o.label + '": unknown effect key ' + k);
       if (r.gameOver) ok(ENDINGS_MAP[r.gameOver], 'endgame "' + o.label + '": missing ending ' + r.gameOver);
     }
   }
@@ -295,7 +475,7 @@ t('beginTurn: turn 16 with no content.endgame is null-safe', () => {
 
 if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endings', () => {
   const SETS = (typeof SETUPS !== 'undefined') ? SETUPS : require('./scenarios.js').SETUPS;
-  const content = { scenarios: CONTENT.SCENARIOS, tripwires: CONTENT.TRIPWIRES,
+  const content = { scenarios: CONTENT.SCENARIOS, funding: CONTENT.FUNDING, tripwires: CONTENT.TRIPWIRES,
                     headlines: CONTENT.HEADLINES, endgame: CONTENT.ENDGAME };
   const tally = {};
   for (const setup of SETS) for (let seed = 1; seed <= 50; seed++) {
@@ -336,7 +516,7 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
 
 if (CONTENT && ENDINGS_MAP) t('no card id is ever drawn twice within a single run (60 seeds)', () => {
   const SETS = (typeof SETUPS !== 'undefined') ? SETUPS : require('./scenarios.js').SETUPS;
-  const content = { scenarios: CONTENT.SCENARIOS, tripwires: CONTENT.TRIPWIRES,
+  const content = { scenarios: CONTENT.SCENARIOS, funding: CONTENT.FUNDING, tripwires: CONTENT.TRIPWIRES,
                     headlines: CONTENT.HEADLINES, endgame: CONTENT.ENDGAME };
   for (const setup of SETS) for (let seed = 1; seed <= 20; seed++) {
     const st = E.createRun(setup, seed, content);
