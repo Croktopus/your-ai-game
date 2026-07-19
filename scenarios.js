@@ -143,85 +143,69 @@ const BALANCED_RATE_EVIDENCE = evidence(['STANFORD_FMTI', 'METR_COMMON_ELEMENTS'
   'A deliberately hedged capability/safety posture is plausible but not a documented industry norm — most studied labs lean toward one side or the other.');
 
 const FUNDING = [
+  // FORK CARDS: served when the player ARRIVES at a fork (position-triggered, in order).
+  // branch:'speed'|'safe' is what moves the piece — SPEED is 3 spaces to the next fork,
+  // SAFE is 5. The road itself shapes alignment (safe compounds it faster). These are the
+  // only cards allowed to touch pacing; see engine BRANCHES.
   { id: 'funding-2026', year: 2026, title: 'The Seed Round',
-    text: "Term sheets are in. The board wants a one-line answer before the ink dries: what is this company actually optimizing for, this year?",
+    text: "Term sheets are in, and the roadmap has two drafts. The board wants one word before the ink dries: which road is this company driving this year?",
     ...premise('FTC_AI_PARTNERSHIPS', 'ANTHROPIC_AWS', 'OPENAI_STRUCTURE'),
     options: [
-      { label: 'Prioritize Capabilities — hire fast, ship faster',
+      { label: 'SPEED — the short road: hire fast, ship faster', branch: 'speed',
         ...CAP_RATE_EVIDENCE,
         results: [
-          { text: "You staff up research three-to-one over safety and tell the board scale is the safety plan. The velocity is real. So is what it costs.",
-            effects: { money: 1, compute: 1, tCapRate: 1, pCapRate: 1, tAlignRate: -1 } } ] },
-      { label: 'Prioritize Alignment — build the safety team first',
+          { text: "You staff up research three-to-one over safety and tell the board scale is the safety plan. The road ahead gets visibly shorter. Nobody asks shorter to what.",
+            effects: { money: 1, compute: 1 } } ] },
+      { label: 'SAFE — the long road: build the safety team first', branch: 'safe',
         ...ALIGN_RATE_EVIDENCE,
         results: [
-          { text: "You hire the interpretability lead before the tenth engineer. It reads as principled to investors who talk a big game about it and reckless to the ones who don't.",
-            effects: { money: 1, trust: 1, tAlignRate: 1, pAlignRate: 1, tCapRate: -1 } } ] },
-      { label: 'Balanced — grow both at the same modest pace',
-        ...BALANCED_RATE_EVIDENCE,
-        results: [
-          { text: "Nobody in the building can tell you, precisely, what the company's whole personality is yet. That is either fine or the whole problem, and it is too early to know which.",
-            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+          { text: "You hire the interpretability lead before the tenth engineer and take the long way. It reads as principled to investors who talk a big game about it and reckless to the ones who don't.",
+            effects: { money: 1, trust: 1 } } ] },
     ] },
   { id: 'funding-2027', year: 2027, title: 'The Growth-Stage Board Meeting',
-    text: "Series C closed at a number that made the trade press do a double take. The board deck has one slide left, and it just says: 'FY2027 priorities?'",
+    text: "Series C closed at a number that made the trade press do a double take. The board deck has one slide left: a road that forks, and a laser pointer in your hand.",
     ...premise('FTC_AI_PARTNERSHIPS', 'HOURS_FRONTIER_LAB', 'STANFORD_FMTI'),
     options: [
-      { label: 'Prioritize Capabilities — the market rewards the frontier, not the footnotes',
+      { label: 'SPEED — the market rewards the frontier, not the footnotes', branch: 'speed',
         ...CAP_RATE_EVIDENCE,
         results: [
-          { text: "You greenlight the next scale-up before the safety review of the last one is even filed. The chart goes up and to the right. Something else goes quietly sideways.",
-            effects: { money: 1, compute: 1, tCapRate: 1, pCapRate: 1, tAlignRate: -1 } } ] },
-      { label: 'Prioritize Alignment — fund the eval team like it matters',
+          { text: "You greenlight the next scale-up before the safety review of the last one is filed. The chart goes up and to the right. Something else goes quietly sideways.",
+            effects: { money: 1, compute: 1 } } ] },
+      { label: 'SAFE — fund the eval team like it matters', branch: 'safe',
         ...ALIGN_RATE_EVIDENCE,
         results: [
           { text: "You triple the red-team budget and slow the release cadence to match. Growth investors ask pointed questions in the Q&A. You answer them anyway.",
-            effects: { money: 1, trust: 1, tAlignRate: 1, pAlignRate: 1, tCapRate: -1 } } ] },
-      { label: 'Balanced — hold the line on both',
-        ...BALANCED_RATE_EVIDENCE,
-        results: [
-          { text: "You resist the board's appetite for a single, exciting number. It is a harder pitch than either extreme. It is also, on the current evidence, still working.",
-            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+            effects: { money: 1, trust: 1 } } ] },
     ] },
   { id: 'funding-2028', year: 2028, title: 'The Treaty-Year Budget',
-    text: "The compute-reporting regime is real now, and so is the pressure it puts on every dollar. Frances wants the FY2028 allocation locked before the next audit window opens.",
+    text: "The compute-reporting regime is real now, and so is the pressure it puts on every dollar. Frances wants to know which branch of the road the FY2028 budget is paving.",
     ...premise('CA_SB53', 'FRONTIER_AI_AUDIT', 'METR_COMMON_ELEMENTS'),
     options: [
-      { label: 'Prioritize Capabilities — the reporting regime rewards whoever is still ahead when it bites',
+      { label: 'SPEED — be ahead when the regime bites', branch: 'speed',
         ...CAP_RATE_EVIDENCE,
         results: [
           { text: "You push the roadmap forward before the auditors can define what 'forward' means. It is legal today. Nobody can promise you it stays legal.",
-            effects: { money: 1, compute: 1, tCapRate: 1, pCapRate: 1, tAlignRate: -1 } } ] },
-      { label: 'Prioritize Alignment — get ahead of the audit instead of around it',
+            effects: { money: 1, compute: 1 } } ] },
+      { label: 'SAFE — get ahead of the audit instead of around it', branch: 'safe',
         ...ALIGN_RATE_EVIDENCE,
         results: [
           { text: "You fund the compliance team like a product line, not a cost center. The first audit goes almost boringly well. Almost.",
-            effects: { money: 1, political: 1, tAlignRate: 1, pAlignRate: 1, tCapRate: -1 } } ] },
-      { label: 'Balanced — hedge the year both ways',
-        ...BALANCED_RATE_EVIDENCE,
-        results: [
-          { text: "You split the difference and hope the treaty timeline splits it with you. Nobody at the board table loves the plan. Nobody can find the hole in it either.",
-            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+            effects: { money: 1, political: 1 } } ] },
     ] },
-  { id: 'funding-2029', year: 2029, title: 'The Last Full Year',
-    text: "This is the budget that walks into Choose a Path. Everyone in the room knows it. Nobody says it out loud until Frances finally does.",
+  { id: 'funding-2029', year: 2029, title: 'The Last Fork',
+    text: "Everyone in the room can see the end of the road from here. Nobody says which end until Frances finally puts both maps on the table.",
     ...premise('GLOBAL_COMPUTE_TREATY', 'UN_FRONTIER_VERIFY', 'OPENAI_STRUCTURE'),
     options: [
-      { label: 'Prioritize Capabilities — go into the endgame ahead, whatever that costs',
+      { label: 'SPEED — arrive first, whatever that costs', branch: 'speed',
         ...CAP_RATE_EVIDENCE,
         results: [
-          { text: "You spend the year's entire discretionary budget on the frontier run. Being ahead when the President calls is worth more to you right now than being able to explain how you got there.",
-            effects: { money: 1, compute: 1, tCapRate: 1, pCapRate: 1, tAlignRate: -1 } } ] },
-      { label: 'Prioritize Alignment — go into the endgame able to defend the numbers',
+          { text: "You spend the year's entire discretionary budget on the frontier run. Being first matters more to you right now than being able to explain how you got there.",
+            effects: { money: 1, compute: 1 } } ] },
+      { label: 'SAFE — arrive able to defend the numbers', branch: 'safe',
         ...ALIGN_RATE_EVIDENCE,
         results: [
-          { text: "You spend the year making sure the audit trail matches the press release. It is not the version of this year that wins headlines. It may be the version that survives the hearing.",
-            effects: { money: 1, trust: 1, tAlignRate: 1, pAlignRate: 1, tCapRate: -1 } } ] },
-      { label: 'Balanced — keep both stories defensible',
-        ...BALANCED_RATE_EVIDENCE,
-        results: [
-          { text: "You refuse to bet the whole year on either story. Whoever asks you which future you're building still doesn't get a clean answer. That may be the most honest thing about this year.",
-            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+          { text: "You take the long way one last time and make sure the audit trail matches the press release. It may not win headlines. It may be what survives the hearing.",
+            effects: { money: 1, trust: 1 } } ] },
     ] },
 ];
 

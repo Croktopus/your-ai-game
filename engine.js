@@ -53,20 +53,57 @@ const Engine = (() => {
     return shuffle(scenarios, rng);
   }
 
+  // The board-game route model: the ONLY thing that moves a piece is 1 step per turn,
+  // and the ONLY thing that changes time-to-ASI is which branch you pick at each of the
+  // 4 yearly forks. SPEED is short; SAFE is long. The road also shapes alignment gently:
+  // both branches GROW true+perceived alignment per step, safe just compounds it faster.
+  const BRANCHES = { speed: { len: 3, align: 0.2 }, safe: { len: 5, align: 0.5 } };
+  const FORKS = 4;                       // one fork per year, 4 years
+  const CAP_PER_FORK = ASI_CAP / FORKS;  // finishing a branch = +5 derived capability
+
+  function newRacer() { return { branches: [], step: 0 }; }
+
+  // Derived capability = how far down your road you are, scaled 0..20. Completing the
+  // 4th branch lands exactly on ASI_CAP, so asiReached/judgeEnding/reveal all keep working.
+  function racerCapability(r) {
+    const done = Math.max(0, r.branches.length - 1);
+    const cur = r.branches.length ? BRANCHES[r.branches[r.branches.length - 1]] : null;
+    const frac = cur ? Math.min(1, r.step / cur.len) : 0;
+    const whole = r.branches.length ? done + frac : 0;
+    return Math.min(ASI_CAP, CAP_PER_FORK * whole);
+  }
+
+  function racerNeedsBranch(r) {
+    if (r.branches.length >= FORKS) return false;
+    if (!r.branches.length) return true;
+    return r.step >= BRANCHES[r.branches[r.branches.length - 1]].len;
+  }
+
+  // Take one step down the racer's current branch; returns the branch def or null.
+  function stepRacer(r) {
+    if (!r.branches.length) return null;
+    const cur = BRANCHES[r.branches[r.branches.length - 1]];
+    if (r.step >= cur.len) return null;     // parked at a fork, waiting to choose
+    r.step++;
+    return cur;
+  }
+
+  function chooseBranch(state, racer, branch) {
+    racer.branches.push(BRANCHES[branch] ? branch : 'safe');
+    racer.step = 0;
+  }
+
   function createRun(setup, seed, content) {
     const rng = mulberry32(seed);
     const stats = Object.assign({}, setup.stats);
-    for (const key of Object.keys(RATE_DEFAULTS))
-      if (key !== 'rivalRate')
-        stats[key] = clampRate(key, stats[key] !== undefined ? stats[key] : RATE_DEFAULTS[key]);
-    const rivalRate = clampRate('rivalRate',
-      setup.stats.rivalRate !== undefined ? setup.stats.rivalRate : RATE_DEFAULTS.rivalRate);
-    delete stats.rivalRate; // lives on state.rivalRate, not state.stats
+    for (const key of Object.keys(RATE_DEFAULTS)) delete stats[key];  // rates retired
+    delete stats.rivalRate;
+    stats.perceivedCapability = 0; stats.trueCapability = 0;          // derived from position
     return {
       seed, rng, turn: 0,
       stats,
-      rivals: { pam: 4, lonnie: 3 },
-      rivalRate,
+      rivals: { pam: 0, lonnie: 0 },     // derived from rival positions each turn
+      race: { player: newRacer(), pam: newRacer(), lonnie: newRacer() },
       flags: {},
       queue: buildQueue(content.scenarios, rng),
       firedTripwires: [], ending: null, headline: null,
@@ -113,39 +150,43 @@ const Engine = (() => {
     Object.assign(state.flags, flags);
   }
 
+  // Card effects may not touch position or pacing — branch choice is the ONLY source of
+  // time-to-ASI (and of baseline alignment growth). Legacy capability/rate keys from the
+  // rate-model era are silently retired; one-off alignment story beats remain legal.
+  const RETIRED_KEYS = { rivals: 1, rivalRate: 1, pCapRate: 1, tCapRate: 1, pAlignRate: 1,
+    tAlignRate: 1, perceivedCapability: 1, trueCapability: 1 };
+
   function applyEffects(state, effects) {
     if (!effects) return;
     for (const [key, delta] of Object.entries(effects)) {
-      if (key === 'rivals') {
-        for (const r of Object.keys(state.rivals))
-          state.rivals[r] = Math.max(0, Math.min(20, state.rivals[r] + delta));
-        continue;
-      }
-      if (key === 'rivalRate') {
-        state.rivalRate = clampRate('rivalRate', state.rivalRate + delta);
-        continue;
-      }
-      if (RATE_BOUNDS[key]) {
-        state.stats[key] = clampRate(key, state.stats[key] + delta);
-        continue;
-      }
+      if (RETIRED_KEYS[key]) continue;
       if (!CLAMPS[key]) { console.warn('unknown effect key: ' + key); continue; }
       const [lo, hi] = CLAMPS[key];
       state.stats[key] = Math.min(hi, Math.max(lo, state.stats[key] + delta));
     }
   }
 
-  // Advance the trajectories: capability & alignment (yours + rivals') ride their rates
-  // every turn. No rng consumed — deterministic given the accumulated rates.
-  function advanceTrajectories(state) {
+  // Advance the race: every racer takes exactly one step down their current branch (the
+  // road shapes the player's alignment per step), rivals coin-flip a branch when they
+  // arrive at a fork, and everyone's capability is re-derived from position.
+  function advanceRace(state) {
     const s = state.stats;
     const clampBar = (key, v) => { const [lo, hi] = CLAMPS[key]; return Math.min(hi, Math.max(lo, v)); };
-    s.perceivedCapability = clampBar('perceivedCapability', s.perceivedCapability + s.pCapRate);
-    s.trueCapability = clampBar('trueCapability', s.trueCapability + s.tCapRate);
-    s.perceivedAlignment = clampBar('perceivedAlignment', s.perceivedAlignment + s.pAlignRate);
-    s.trueAlignment = clampBar('trueAlignment', s.trueAlignment + s.tAlignRate);
-    for (const r of Object.keys(state.rivals))
-      state.rivals[r] = Math.max(0, Math.min(20, state.rivals[r] + state.rivalRate));
+    const stepped = stepRacer(state.race.player);
+    if (stepped) {
+      s.trueAlignment = clampBar('trueAlignment', s.trueAlignment + stepped.align);
+      s.perceivedAlignment = clampBar('perceivedAlignment', s.perceivedAlignment + stepped.align);
+    }
+    for (const name of ['pam', 'lonnie']) {
+      const r = state.race[name];
+      // Rivals coin-flip each fork, hedged slightly safe-ward (0.35 speed) so a
+      // safety-focused player still reaches the 2029 endgame in a meaningful share of
+      // runs instead of always losing the race to a lucky speed-heavy rival.
+      if (racerNeedsBranch(r)) chooseBranch(state, r, state.rng() < 0.35 ? 'speed' : 'safe');
+      stepRacer(r);
+      state.rivals[name] = racerCapability(r);
+    }
+    s.perceivedCapability = s.trueCapability = racerCapability(state.race.player);
   }
 
   // Early-ASI finish check: reaching ASI_CAP ends the run before turn 16. Rivals are
@@ -164,10 +205,23 @@ const Engine = (() => {
     return null;
   }
 
-  function fireResult(state, r, optionFlags) {
+  function fireResult(state, r, option) {
     applyEffects(state, r.effects);
-    applyFlags(state, optionFlags);
+    applyFlags(state, option && option.setFlags);
     applyFlags(state, r.setFlags);
+    // A fork option carries branch:'speed'|'safe' — choosing it takes the first step
+    // down the new road immediately (so an all-speed route completes in 3+3+3+3 = 12 turns).
+    if (option && option.branch) {
+      const p = state.race.player;
+      chooseBranch(state, p, option.branch);
+      const stepped = stepRacer(p);
+      if (stepped) {
+        const clampBar = (key, v) => { const [lo, hi] = CLAMPS[key]; return Math.min(hi, Math.max(lo, v)); };
+        state.stats.trueAlignment = clampBar('trueAlignment', state.stats.trueAlignment + stepped.align);
+        state.stats.perceivedAlignment = clampBar('perceivedAlignment', state.stats.perceivedAlignment + stepped.align);
+      }
+      state.stats.perceivedCapability = state.stats.trueCapability = racerCapability(p);
+    }
     if (r.gameOver) state.ending = r.gameOver;
     return r;
   }
@@ -177,9 +231,9 @@ const Engine = (() => {
       if (!checkCondition(r.if, state)) continue;
       if (!checkFlags(r.ifFlags, state)) continue;
       if (r.chance !== undefined && state.rng() >= r.chance) continue;
-      return fireResult(state, r, option.setFlags);
+      return fireResult(state, r, option);
     }
-    return fireResult(state, option.results[option.results.length - 1], option.setFlags);
+    return fireResult(state, option.results[option.results.length - 1], option);
   }
 
   function pickHeadline(state, headlines) {
@@ -192,19 +246,23 @@ const Engine = (() => {
   function beginTurn(state, content) {
     state.turn++;
     applyEffects(state, { money: -BURN });
-    advanceTrajectories(state);
+    // Snapshot BEFORE moving: a racer who finished a branch last turn is parked at the
+    // fork now, and chooses this turn (choice + first step together). This keeps the
+    // clean arithmetic: all-speed forks at turns 1/4/7/10, route done end of turn 12.
+    const atFork = racerNeedsBranch(state.race.player);
+    advanceRace(state);
     state.headline = pickHeadline(state, content.headlines);
     if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
-    // Early finish: someone hit ASI before Q4 2029. Beats the normal card draw and the
-    // turn-16 endgame alike, same as the bankruptcy check above.
+    // Early finish: someone completed their route before Q4 2029. Beats the normal card
+    // draw and the turn-16 endgame alike, same as the bankruptcy check above.
     const asi = asiReached(state);
     if (asi) { state.ending = asi; return null; }
     if (state.turn === TURNS) return content.endgame || null;
-    // Q1 of each year (turns 1/5/9/13): guaranteed funding card, deck untouched.
-    // Wins over tripwires, same priority as the endgame winning at turn 16.
-    if (state.turn % 4 === 1 && content.funding) {
-      const year = yearForTurn(state.turn);
-      const fc = content.funding.find(f => f.year === year);
+    // Forks are POSITION-triggered: when the player finishes a branch (or at the start),
+    // the next fork card is served — all-speed forks land at turns 1/4/7/10, all-safe at
+    // 1/6/11/16. Wins over tripwires, same priority as the endgame winning at turn 16.
+    if (atFork && content.funding) {
+      const fc = content.funding[state.race.player.branches.length];
       if (fc) return fc;
     }
     const tw = content.tripwires.find(t =>
@@ -235,6 +293,6 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, ASI_CAP, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceTrajectories, clampRate, asiReached, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, ASI_CAP, BRANCHES, FORKS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceRace, racerCapability, racerNeedsBranch, clampRate, asiReached, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

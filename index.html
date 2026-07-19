@@ -57,15 +57,15 @@
   #board .legend { display:inline-block; margin:0 8px; font-size:10px; color:var(--dim); }
   #board .legend b { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px;
     vertical-align:middle; }
-  /* forks: short gold SPEED spur vs longer dashed-green SAFE detour */
-  #board .fork-speed { stroke:var(--gold); fill:var(--gold); stroke-width:2.5; stroke-linecap:round; opacity:.55; }
-  #board .fork-safe  { stroke:var(--good); fill:none; stroke-width:2.5; stroke-linecap:round;
-    stroke-dasharray:4 3; opacity:.55; }
-  #board .fork-speed.lit { opacity:1; filter:drop-shadow(0 0 4px var(--gold)); }
-  #board .fork-safe.lit  { opacity:1; filter:drop-shadow(0 0 4px var(--good)); }
-  #board text.fork-label { font:bold 8px Consolas,Menlo,monospace; letter-spacing:.06em; opacity:.7; }
-  #board text.fork-label.speed { fill:var(--gold); }
-  #board text.fork-label.safe  { fill:var(--good); }
+  /* fork segments: every year the road splits — short SPEED road on top, long SAFE dip below */
+  #board .branch { fill:none; stroke:var(--bg); stroke-width:12; stroke-linecap:round; }
+  #board .branch-edge { fill:none; stroke:var(--line); stroke-width:14; stroke-linecap:round; }
+  #board .branch.taken-speed { stroke:#3a2f14; }
+  #board .branch.taken-safe  { stroke:#14301c; }
+  #board .fork-node { fill:var(--panel); stroke:var(--dim); stroke-width:2; }
+  #board text.branch-label { font:bold 8px Consolas,Menlo,monospace; letter-spacing:.08em; opacity:.75; }
+  #board text.branch-label.speed { fill:var(--gold); }
+  #board text.branch-label.safe  { fill:var(--good); }
 
   /* card */
   #card-zone { flex:1; display:flex; align-items:center; justify-content:center; padding:24px; }
@@ -180,12 +180,8 @@
   <div id="ticker"></div>
   <div id="board">
     <div class="board-head"><span>START — nascent capability</span><span class="finish-tag">ASI FINISH →</span></div>
-    <svg id="board-svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid meet">
-      <path class="road-edge" d="M 50,35 H 900 Q 970,35 970,67.5 Q 970,100 900,100 H 100 Q 30,100 30,132.5 Q 30,165 100,165 H 935"></path>
-      <path id="road-path" class="road" d="M 50,35 H 900 Q 970,35 970,67.5 Q 970,100 900,100 H 100 Q 30,100 30,132.5 Q 30,165 100,165 H 935"></path>
-      <g id="board-forks"></g>
-      <g id="board-spaces"></g>
-      <g id="board-finish"></g>
+    <svg id="board-svg" viewBox="0 0 1000 210" preserveAspectRatio="xMidYMid meet">
+      <g id="board-geo"></g>
       <g id="board-tokens">
         <g id="tok-lonnie" class="token lonnie"><circle r="8"></circle><text>L</text></g>
         <g id="tok-pam" class="token pam"><circle r="8"></circle><text>P</text></g>
@@ -356,11 +352,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 function choose(opt) {
-  // On a funding turn, light the fork branch the player's pick takes this year.
-  if (currentCard && /^funding-/.test(currentCard.id) && currentCard.options) {
-    const idx = currentCard.options.indexOf(opt);
-    lightFork(currentCard.year, idx === 0 ? 'speed' : idx === 1 ? 'safe' : 'both');
-  }
   const before = snapshot();
   const result = Engine.resolveOption(state, opt);
   renderHUD();
@@ -409,18 +400,16 @@ function showReport(report) {
 $('report-continue').onclick = () => { show('game-screen'); nextTurn(); };
 
 // ---- HUD ----
-// Trend glyph for a rate stat: ↑↑ fast / ↑ slow / → flat / ↓ decaying (alignment rates
-// only — capability & rival rates are floored at 0 and never show ↓).
-function trendGlyph(rate) {
-  if (rate > 1) return '↑↑';
-  if (rate > 0) return '↑';
-  if (rate < 0) return '↓';
-  return '→';
+// Alignment trend = the road you're on: SAFE compounds it fast, SPEED slowly.
+function alignTrend() {
+  const b = state.race.player.branches;
+  if (!b.length) return '→';
+  return b[b.length - 1] === 'safe' ? '↑↑' : '↑';
 }
 function renderHUD() {
   $('ticker').textContent = state.headline || 'A quiet week. Nobody believes it.';
   document.querySelector('#g-align .fill').style.width = (state.stats.perceivedAlignment * 10) + '%';
-  document.querySelector('#g-align .trend').textContent = trendGlyph(state.stats.pAlignRate);
+  document.querySelector('#g-align .trend').textContent = alignTrend();
   const hb = $('hud-bottom');
   hb.innerHTML = '';
   for (const [key, label] of VISIBLE) {
@@ -446,77 +435,69 @@ function svg(tag, attrs, text) {
   if (text != null) e.textContent = text;
   return e;
 }
-// Light the branch the player's funding pick took this year (speed / safe / both).
-function lightFork(year, which) {
-  document.querySelectorAll('[data-fork$="-' + year + '"]').forEach(el => {
-    const isSpeed = el.getAttribute('data-fork').indexOf('speed') === 0;
-    el.classList.toggle('lit', which === 'both' || (which === 'speed') === isSpeed);
-  });
+// ---- board: 4 fork segments. Every year the road splits: SPEED on top (3 spaces,
+// straight) or SAFE below (5 spaces, the long dip). A piece's position = which branch
+// it took and how many spaces it has stepped. The board IS the game structure.
+const GEO = { startX: 30, segW: 218, y: 78, dipY: 195 };
+function forkX(k) { return GEO.startX + GEO.segW * k; }
+// Point at t (0..1] along segment k's branch. speed: straight; safe: quadratic dip.
+function branchPoint(k, type, t) {
+  const x0 = forkX(k), x1 = forkX(k + 1), y = GEO.y;
+  if (type === 'speed') return { x: x0 + (x1 - x0) * t, y: y };
+  const cx = (x0 + x1) / 2, cy = GEO.dipY, u = 1 - t;
+  return { x: u * u * x0 + 2 * u * t * cx + t * t * x1, y: u * u * y + 2 * u * t * cy + t * t * y };
+}
+function branchD(k, type) {
+  const x0 = forkX(k), x1 = forkX(k + 1), y = GEO.y;
+  if (type === 'speed') return 'M ' + x0 + ',' + y + ' H ' + x1;
+  return 'M ' + x0 + ',' + y + ' Q ' + (x0 + x1) / 2 + ',' + GEO.dipY + ' ' + x1 + ',' + y;
 }
 function renderBoard() {
-  const path = document.getElementById('road-path');
-  const L = path.getTotalLength();
-  const cap = Engine.ASI_CAP;
-
-  // Draw the spaces + finish flag once (16 spaces = the 16 quarters; funding quarters are milestones).
-  const spacesG = document.getElementById('board-spaces');
-  if (!spacesG.childNodes.length) {
-    const N = Engine.TURNS;
-    for (let i = 0; i <= N; i++) {
-      const p = path.getPointAtLength(L * i / N);
-      const c = document.createElementNS(SVGNS, 'circle');
-      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', 5);
-      c.setAttribute('class', 'space' + ([1, 5, 9, 13].includes(i) ? ' milestone' : ''));
-      spacesG.appendChild(c);
+  const geo = document.getElementById('board-geo');
+  geo.innerHTML = '';
+  const chosen = state ? state.race.player.branches : [];
+  for (let k = 0; k < Engine.FORKS; k++) {
+    for (const type of ['safe', 'speed']) {
+      const taken = chosen[k] === type;
+      geo.appendChild(svg('path', { d: branchD(k, type), class: 'branch-edge' }));
+      geo.appendChild(svg('path', { d: branchD(k, type),
+        class: 'branch' + (taken ? ' taken-' + type : '') }));
+      const len = Engine.BRANCHES[type].len;
+      for (let i = 1; i <= len; i++) {
+        const p = branchPoint(k, type, i / len);
+        geo.appendChild(svg('circle', { cx: p.x, cy: p.y, r: 4.5, class: 'space' }));
+      }
     }
-    const end = path.getPointAtLength(L);
-    const fg = document.getElementById('board-finish');
-    fg.setAttribute('class', 'finish-flag');
-    const fc = document.createElementNS(SVGNS, 'circle');
-    fc.setAttribute('cx', end.x); fc.setAttribute('cy', end.y); fc.setAttribute('r', 13);
-    const ft = document.createElementNS(SVGNS, 'text');
-    ft.setAttribute('x', end.x); ft.setAttribute('y', end.y);
-    ft.setAttribute('text-anchor', 'middle'); ft.setAttribute('dominant-baseline', 'central');
-    ft.textContent = 'ASI';
-    fg.appendChild(fc); fg.appendChild(ft);
-
-    // Forks at the funding milestones: a short SPEED spur vs a longer SAFE detour.
-    const YRS = { 1: 2026, 5: 2027, 9: 2028, 13: 2029 };
-    const forkG = document.getElementById('board-forks');
-    Object.keys(YRS).forEach(k => {
-      const i = +k, yr = YRS[i];
-      const at = L * i / N, p = path.getPointAtLength(at), q = path.getPointAtLength(Math.min(L, at + 2));
-      let tx = q.x - p.x, ty = q.y - p.y; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-      const nx = -ty, ny = tx;                                  // path normal
-      const sx = p.x + tx * 42, sy = p.y + ty * 42;             // spur tip
-      forkG.appendChild(svg('line', { x1: p.x, y1: p.y, x2: sx, y2: sy, class: 'fork-speed', 'data-fork': 'speed-' + yr }));
-      const a = 6;                                              // arrowhead
-      forkG.appendChild(svg('polygon', { class: 'fork-speed', 'data-fork': 'speed-' + yr,
-        points: [sx + tx * a, sy + ty * a, sx - nx * a * 0.7, sy - ny * a * 0.7, sx + nx * a * 0.7, sy + ny * a * 0.7].join(' ') }));
-      const bdir = p.y > 100 ? -1 : 1;                          // detour bulges toward board center
-      const cx = p.x + tx * 21, cy = p.y + 42 * bdir;           // safe bulge control pt
-      forkG.appendChild(svg('path', { d: 'M ' + p.x + ',' + p.y + ' Q ' + cx + ',' + cy + ' ' + sx + ',' + sy, class: 'fork-safe', 'data-fork': 'safe-' + yr }));
-      forkG.appendChild(svg('text', { x: sx + tx * 8 - 5, y: sy + ty * 8 - 3, class: 'fork-label speed' }, 'SPEED'));
-      forkG.appendChild(svg('text', { x: cx - 8, y: cy + bdir * 9 + 3, class: 'fork-label safe' }, 'SAFE'));
-    });
+    const f = branchPoint(k, 'speed', 0.0001);
+    geo.appendChild(svg('circle', { cx: forkX(k), cy: GEO.y, r: 7, class: 'fork-node' }));
+    if (k === 0 || chosen.length === k) {   // label the fork the player is at (or start)
+      geo.appendChild(svg('text', { x: forkX(k) + GEO.segW * 0.4, y: GEO.y - 12, class: 'branch-label speed' }, 'SPEED · 3'));
+      geo.appendChild(svg('text', { x: forkX(k) + GEO.segW * 0.38, y: GEO.dipY - 42, class: 'branch-label safe' }, 'SAFE · 5'));
+    }
   }
+  // ASI finish
+  const ex = forkX(Engine.FORKS);
+  geo.appendChild(svg('g', { class: 'finish-flag' }));
+  const fg = geo.lastChild;
+  fg.appendChild(svg('circle', { cx: ex, cy: GEO.y, r: 13 }));
+  fg.appendChild(svg('text', { x: ex, y: GEO.y, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, 'ASI'));
 
-  placeToken('tok-player', state.stats.perceivedCapability / cap, 0, path, L);
-  placeToken('tok-pam',    state.rivals.pam / cap,               1, path, L);
-  placeToken('tok-lonnie', state.rivals.lonnie / cap,          -1, path, L);
+  if (!state) return;
+  placeRacer('tok-player', state.race.player, 0);
+  placeRacer('tok-pam', state.race.pam, -11);
+  placeRacer('tok-lonnie', state.race.lonnie, 11);
 }
 
-// Place a token piece at `frac` (0..1) along the road, nudged `off` (-1/0/1) along the
-// path normal so the three pieces sit side by side instead of stacking.
-function placeToken(id, frac, off, path, L) {
-  frac = Math.max(0, Math.min(1, frac || 0));
-  const at = frac * L;
-  const p = path.getPointAtLength(at);
-  const p2 = path.getPointAtLength(Math.min(L, at + 1));
-  const dx = p2.x - p.x, dy = p2.y - p.y, len = Math.hypot(dx, dy) || 1;
-  const x = p.x + (-dy / len) * off * 10;
-  const y = p.y + (dx / len) * off * 10;
-  document.getElementById(id).setAttribute('transform', 'translate(' + x + ',' + y + ')');
+// A racer's piece sits on their current branch at step/len (parked pieces sit on the
+// fork node they're waiting at); `dy` staggers pieces so they never fully overlap.
+function placeRacer(id, r, dy) {
+  let p;
+  if (!r.branches.length) p = { x: forkX(0), y: GEO.y };
+  else {
+    const k = r.branches.length - 1, type = r.branches[k], len = Engine.BRANCHES[type].len;
+    p = r.step >= len ? { x: forkX(k + 1), y: GEO.y } : branchPoint(k, type, Math.max(0.06, r.step / len));
+  }
+  document.getElementById(id).setAttribute('transform', 'translate(' + p.x + ',' + (p.y + dy) + ')');
 }
 
 // ---- ending ----
