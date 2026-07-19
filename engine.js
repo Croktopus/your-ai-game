@@ -265,6 +265,14 @@ const Engine = (() => {
       const fc = content.funding[state.race.player.branches.length];
       if (fc) return fc;
     }
+    return drawCard(state, content);
+  }
+
+  // The turn's normal card draw (tripwires, then the deck). Split out so the UI can draw
+  // the SAME turn's scenario right after a fork choice — the fork is a pre-step
+  // interstitial (park at the intersection, choose, slide to the road's first space),
+  // not a whole turn by itself. Every turn ends on a scenario.
+  function drawCard(state, content) {
     const tw = content.tripwires.find(t =>
       !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
     if (tw) { state.firedTripwires.push(tw.id); return tw; }
@@ -293,6 +301,6 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, ASI_CAP, BRANCHES, FORKS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceRace, racerCapability, racerNeedsBranch, clampRate, asiReached, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, ASI_CAP, BRANCHES, FORKS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceRace, racerCapability, racerNeedsBranch, clampRate, asiReached, resolveOption, pickHeadline, beginTurn, drawCard, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

@@ -245,7 +245,7 @@ const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2
   'Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029'];
 const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
-let activeKeyMap = {}, cardLocked = false, currentCard = null;
+let activeKeyMap = {}, cardLocked = false, currentCard = null, pendingSameTurnCard = false;
 
 function show(id) {
   for (const s of ['setup-screen','game-screen','report-screen','ending-screen']) $(s).hidden = (s !== id);
@@ -354,6 +354,9 @@ document.addEventListener('keydown', (e) => {
 function choose(opt) {
   const before = snapshot();
   const result = Engine.resolveOption(state, opt);
+  // A fork choice is a pre-step interstitial, not a whole turn: after its outcome you
+  // slide to the road's first space and the SAME turn's scenario is served.
+  pendingSameTurnCard = !!opt.branch;
   renderHUD();
   $('ov-title').textContent = 'What happens';
   $('ov-text').textContent = result.text;
@@ -382,6 +385,11 @@ function snapshot() {
 $('ov-next').onclick = () => {
   $('overlay').hidden = true;
   if (Engine.isOver(state)) return showEnding();
+  if (pendingSameTurnCard) {           // fork resolved: same turn continues with a scenario
+    pendingSameTurnCard = false;
+    const card = Engine.drawCard(state, CONTENT);
+    if (card) return renderCard(card);
+  }
   const report = REPORTS.find(r => r.afterTurn === state.turn);
   if (report) return showReport(report);
   nextTurn();
@@ -497,7 +505,8 @@ function placeRacer(id, r, dy) {
     const k = r.branches.length - 1, type = r.branches[k], len = Engine.BRANCHES[type].len;
     p = r.step >= len ? { x: forkX(k + 1), y: GEO.y } : branchPoint(k, type, Math.max(0.06, r.step / len));
   }
-  document.getElementById(id).setAttribute('transform', 'translate(' + p.x + ',' + (p.y + dy) + ')');
+  // style.transform (not the SVG attribute) so the CSS transition actually glides.
+  document.getElementById(id).style.transform = 'translate(' + p.x + 'px,' + (p.y + dy) + 'px)';
 }
 
 // ---- ending ----
