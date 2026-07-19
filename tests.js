@@ -65,6 +65,80 @@ t('meetsRequires is atLeast semantics', () => {
   ok(!E.meetsRequires({ political: 6 }, s));
 });
 
+t('checkFlags: scalar equality, array membership, missing flag never matches', () => {
+  const s = mkState();
+  ok(E.checkFlags(undefined, s), 'undefined required passes');
+  ok(!E.checkFlags({ youthPolicy: 'dismissed' }, s), 'unset flag does not match scalar');
+  ok(!E.checkFlags({ youthPolicy: ['dismissed', 'settled'] }, s), 'unset flag does not match array');
+  s.flags.youthPolicy = 'dismissed';
+  ok(E.checkFlags({ youthPolicy: 'dismissed' }, s), 'scalar equality matches');
+  ok(!E.checkFlags({ youthPolicy: 'guardrails' }, s), 'scalar mismatch fails');
+  ok(E.checkFlags({ youthPolicy: ['dismissed', 'settled'] }, s), 'array membership matches');
+  ok(!E.checkFlags({ youthPolicy: ['guardrails', 'settled'] }, s), 'array without actual value fails');
+  s.flags.other = 'x';
+  ok(E.checkFlags({ youthPolicy: 'dismissed', other: 'x' }, s), 'multiple required keys all must match');
+  ok(!E.checkFlags({ youthPolicy: 'dismissed', other: 'y' }, s), 'one mismatched key fails the whole set');
+});
+
+t('applyFlags: merges into state.flags, persists, later calls overwrite same key', () => {
+  const s = mkState();
+  E.applyFlags(s, undefined); // no-op, must not throw
+  eq(s.flags, {});
+  E.applyFlags(s, { youthPolicy: 'guardrails' });
+  eq(s.flags, { youthPolicy: 'guardrails' });
+  E.applyFlags(s, { other: 'x' });
+  eq(s.flags, { youthPolicy: 'guardrails', other: 'x' }, 'accumulates across separate calls');
+  E.applyFlags(s, { youthPolicy: 'dismissed' });
+  eq(s.flags.youthPolicy, 'dismissed', 'later setFlags overwrites the same key');
+});
+
+t('resolveOption: option.setFlags and result.setFlags both apply, and persist turn to turn', () => {
+  const opt = { label: 'x', setFlags: { seen: 'yes' }, results: [
+    { text: 'a', effects: {}, setFlags: { youthPolicy: 'guardrails' } } ] };
+  const s = mkState();
+  E.resolveOption(s, opt);
+  eq(s.flags, { seen: 'yes', youthPolicy: 'guardrails' }, 'option-level and result-level setFlags both applied');
+  // Flags survive independently of turn/stat resets (simulate a later "turn").
+  s.turn++;
+  eq(s.flags.youthPolicy, 'guardrails', 'flag still readable on a later turn');
+});
+
+t('resolveOption: ifFlags gates a result; falls through to the unconditional last result otherwise', () => {
+  const opt = { label: 'x', results: [
+    { ifFlags: { youthPolicy: 'dismissed' }, text: 'harsh', effects: { trust: -4 } },
+    { ifFlags: { youthPolicy: ['guardrails', 'settled'] }, text: 'soft', effects: { trust: -1 } },
+    { text: 'default', effects: { trust: -2 } },
+  ] };
+  // No flag set at all -> falls through to the unconditional default.
+  const s0 = mkState();
+  eq(E.resolveOption(s0, opt).text, 'default');
+  eq(s0.stats.trust, 3);
+  // Flag set to a value matching the array branch.
+  const s1 = mkState(); s1.flags.youthPolicy = 'settled';
+  eq(E.resolveOption(s1, opt).text, 'soft');
+  eq(s1.stats.trust, 4);
+  // Flag set to the scalar branch's value.
+  const s2 = mkState(); s2.flags.youthPolicy = 'dismissed';
+  eq(E.resolveOption(s2, opt).text, 'harsh');
+  eq(s2.stats.trust, 1);
+  // Flag set to some unrelated value -> neither gated result matches, falls through.
+  const s3 = mkState(); s3.flags.youthPolicy = 'controls';
+  eq(E.resolveOption(s3, opt).text, 'default');
+});
+
+t('resolveOption: ifFlags combines with if/chance — all must pass', () => {
+  const opt = { label: 'x', results: [
+    { if: { trust: { below: 3 } }, ifFlags: { youthPolicy: 'dismissed' }, text: 'both', effects: {} },
+    { text: 'default', effects: {} },
+  ] };
+  const s1 = mkState(); s1.flags.youthPolicy = 'dismissed'; // flag matches, stat condition doesn't (trust=5)
+  eq(E.resolveOption(s1, opt).text, 'default');
+  const s2 = mkState(); s2.stats.trust = 2; // stat condition matches, flag doesn't
+  eq(E.resolveOption(s2, opt).text, 'default');
+  const s3 = mkState(); s3.stats.trust = 2; s3.flags.youthPolicy = 'dismissed'; // both match
+  eq(E.resolveOption(s3, opt).text, 'both');
+});
+
 t('applyEffects clamps and handles rivals key', () => {
   const s = mkState();
   E.applyEffects(s, { money: -99, trueCapability: 99, rivals: -2 });
@@ -325,6 +399,27 @@ if (CONTENT) t('FUNDING: one guaranteed card per year, sets rate keys', () => {
     for (const o of f.options) {
       const effects = o.results[o.results.length - 1].effects;
       ok(RATE_KEYS.some(k => effects[k] !== undefined), f.id + ' "' + o.label + '": should set a rate key');
+    }
+  }
+});
+
+if (CONTENT) t('youthPolicy flag chain: suicide-lawsuit sets it, 2+ later cards read it', () => {
+  const setter = CONTENT.SCENARIOS.find(s => s.id === 'suicide-lawsuit');
+  ok(setter, 'suicide-lawsuit card exists');
+  const setValues = setter.options.map(o => o.setFlags && o.setFlags.youthPolicy).filter(Boolean);
+  ok(setValues.length >= 2, 'suicide-lawsuit options set at least 2 distinct youthPolicy stances');
+  ok(setValues.includes('dismissed'), 'one stance is "dismissed"');
+
+  const readers = CONTENT.SCENARIOS.filter(s =>
+    s.options && s.options.some(o => o.results.some(r => r.ifFlags && r.ifFlags.youthPolicy)));
+  ok(readers.length >= 2, 'expected at least 2 later cards reading the youthPolicy flag, got ' + readers.length);
+  for (const card of readers) {
+    ok(card.year === 2028 || card.year === 2029, card.id + ': flag-reading card should be a later (2028/2029) year card');
+    for (const o of card.options) {
+      const gated = o.results.filter(r => r.ifFlags && r.ifFlags.youthPolicy);
+      if (!gated.length) continue;
+      const last = o.results[o.results.length - 1];
+      ok(!last.ifFlags, card.id + ' "' + o.label + '": last result must be the unconditional fallback, not ifFlags-gated');
     }
   }
 });

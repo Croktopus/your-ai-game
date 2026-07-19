@@ -62,6 +62,7 @@ const Engine = (() => {
       stats,
       rivals: { pam: 4, lonnie: 3 },
       rivalRate,
+      flags: {},
       queue: buildQueue(content.scenarios, rng),
       firedTripwires: [], ending: null, headline: null,
     };
@@ -89,6 +90,22 @@ const Engine = (() => {
   function meetsRequires(req, state) {
     if (!req) return true;
     return Object.entries(req).every(([key, min]) => getStat(state, key) >= min);
+  }
+
+  // Cross-turn memory: an option/result can setFlags, and a later result can gate on
+  // ifFlags. A required value that is an array matches if the actual flag is one of the
+  // array's values; a scalar matches on equality; a missing/unset flag never matches.
+  function checkFlags(required, state) {
+    if (!required) return true;
+    return Object.entries(required).every(([key, expected]) => {
+      const actual = state.flags[key];
+      return Array.isArray(expected) ? expected.includes(actual) : actual === expected;
+    });
+  }
+
+  function applyFlags(state, flags) {
+    if (!flags) return;
+    Object.assign(state.flags, flags);
   }
 
   function applyEffects(state, effects) {
@@ -126,8 +143,10 @@ const Engine = (() => {
       state.rivals[r] = Math.max(0, Math.min(20, state.rivals[r] + state.rivalRate));
   }
 
-  function fireResult(state, r) {
+  function fireResult(state, r, optionFlags) {
     applyEffects(state, r.effects);
+    applyFlags(state, optionFlags);
+    applyFlags(state, r.setFlags);
     if (r.gameOver) state.ending = r.gameOver;
     return r;
   }
@@ -135,10 +154,11 @@ const Engine = (() => {
   function resolveOption(state, option) {
     for (const r of option.results) {
       if (!checkCondition(r.if, state)) continue;
+      if (!checkFlags(r.ifFlags, state)) continue;
       if (r.chance !== undefined && state.rng() >= r.chance) continue;
-      return fireResult(state, r);
+      return fireResult(state, r, option.setFlags);
     }
-    return fireResult(state, option.results[option.results.length - 1]);
+    return fireResult(state, option.results[option.results.length - 1], option.setFlags);
   }
 
   function pickHeadline(state, headlines) {
@@ -190,6 +210,6 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, advanceTrajectories, clampRate, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, checkFlags, meetsRequires, applyEffects, applyFlags, advanceTrajectories, clampRate, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

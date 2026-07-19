@@ -80,6 +80,45 @@ wins at turn 16. Each funding card has the same three-option shape: Prioritize C
 throttles back toward its floor), Balanced (a modest, penalty-free bump to both). This is the
 dominant rate lever for the year — scenario cards nudge around whatever baseline funding set.
 
+## Flags — cross-turn memory
+
+A card's choice can leave a mark that a much later card reads. Two pieces:
+
+- **`setFlags`** — put it on an `option` (fires no matter which result resolves) or on a
+  specific `result` (fires only when that result is the one that resolves). Shape:
+  `{ flagName: 'value' }`. Later `setFlags` for the same key overwrite earlier ones — flags
+  hold the most recent stance, not a history.
+- **`ifFlags`** — put it on a `result` to gate that result on a flag set earlier in the run.
+  Shape: `{ flagName: 'value' }` (scalar, exact match) or `{ flagName: ['value1', 'value2'] }`
+  (array, matches if the flag is ANY of those values). A flag that was never set never
+  matches. `ifFlags` stacks with `if`/`chance` on the same result — all must pass.
+
+Ordering rule is the same one you already use for `if`: **the last result in a card/option
+must stay unconditional** (no `if`, no `chance`, no `ifFlags`) — it's the fallback when
+nothing more specific matches. Put `ifFlags`-gated results earlier in the array, most-specific
+first, plain fallback last.
+
+Example — the youth-safety chain. `suicide-lawsuit` (wildcard, any year) sets the stance:
+
+```js
+{ label: "Build real children's guardrails", setFlags: { youthPolicy: 'guardrails' }, results: [...] }
+{ label: 'Dismiss it as a nuisance suit', setFlags: { youthPolicy: 'dismissed' }, results: [...] }
+```
+
+`un-treaty-vote` (2028) and `neurosecurity-lawsuit` (2029) read it back, turns and sometimes
+years later:
+
+```js
+{ label: 'Lobby against it quietly, stay publicly neutral', results: [
+  { ifFlags: { youthPolicy: 'dismissed' }, text: "...the leaked memo lands next to your old nuisance-suit line...", effects: { trust: -4 } },
+  { ifFlags: { youthPolicy: ['guardrails', 'settled'] }, text: "...lands softer next to a record that shows you built something...", effects: { trust: -1 } },
+  { text: "...a staffer's memo surfaces eight months later...", effects: { trust: -2 } }, // fallback: flag never set
+] }
+```
+
+Use flags sparingly — they're for a choice that should genuinely echo later (a stance,
+a settlement, a cover-up), not a replacement for `if` on visible/hidden stats.
+
 ## Endgame & report cards
 
 Turn 16 (Q4 2029) is reserved — `beginTurn` hands back `ENDGAME` from `scenarios.js` instead

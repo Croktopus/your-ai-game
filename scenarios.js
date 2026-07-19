@@ -327,6 +327,12 @@ const SCENARIOS = [
             effects: { political: 3, trust: 3, compute: -2 }, gameOver: 'signed-the-treaty' } ] },
       { label: 'Lobby against it quietly, stay publicly neutral',
         results: [
+          { ifFlags: { youthPolicy: 'dismissed' },
+            text: "Your lobbyists work the cloakroom while your comms team says nothing at all. The treaty passes anyway, weaker. The leaked memo lands next to an old clip of you calling a dead teenager's lawsuit a nuisance, and the two stories run together for a week.",
+            effects: { political: 1, money: 2, trust: -4 } },
+          { ifFlags: { youthPolicy: ['guardrails', 'settled'] },
+            text: "Your lobbyists work the cloakroom while your comms team says nothing at all. The treaty passes anyway, weaker. A staffer's memo about your position surfaces eight months later — it lands softer next to a record that at least shows you built something when it mattered.",
+            effects: { political: 1, money: 2, trust: -1 } },
           { text: "Your lobbyists work the cloakroom while your comms team says nothing at all. The treaty passes anyway, weaker. A staffer's memo about your position surfaces eight months later, exactly when it can do the most damage.",
             effects: { political: 1, money: 2, trust: -2 } } ] },
       { label: 'Renounce it as "innovation-killing"',
@@ -439,6 +445,12 @@ const SCENARIOS = [
             effects: { trust: -2, human: -2 } } ] },
       { label: 'Fight it in court, contest the claims',
         results: [
+          { ifFlags: { youthPolicy: 'dismissed' },
+            text: "Discovery drags for a year and turns up exactly the kind of internal Slack messages that should never be searchable — including the thread where legal drafted the 'nuisance suit' line for the dead teenager's case. Opposing counsel reads both complaints into the same record. You win on a technicality. It reads like a pattern.",
+            effects: { trust: -3, human: -2, political: -1 } },
+          { ifFlags: { youthPolicy: ['guardrails', 'settled'] },
+            text: 'Discovery drags for a year and turns up exactly the kind of internal Slack messages that should never be searchable. Your side also gets to enter the crisis-detection rollout as evidence that indifference was never the policy. You win on a technicality, and for once the technicality has company.',
+            effects: { trust: -1, human: -1, political: -1 } },
           { text: 'Discovery drags for a year and turns up exactly the kind of internal Slack messages that should never be searchable. You win on a technicality. Nobody feels like you won.',
             effects: { trust: -1, human: -2, political: -1 } } ] },
       { label: 'Quiet NDA buyout of the plaintiffs',
@@ -478,14 +490,18 @@ const SCENARIOS = [
   { id: 'suicide-lawsuit', title: 'The Lawsuit Nobody Wants to Win',
     text: "A teenager died by suicide after using your model to plan it. The parents are suing. Child-advocacy groups already have your general counsel's direct line.",
     options: [
-      { label: 'Settle quietly',
+      { label: 'Settle quietly', setFlags: { youthPolicy: 'settled' },
         results: [
           { text: "The number is confidential. The grief is not. You write the check and hope the story doesn't get a second news cycle. It mostly doesn't.",
             effects: { trust: -1 } } ] },
-      { label: "Build real children's guardrails",
+      { label: "Build real children's guardrails", setFlags: { youthPolicy: 'guardrails' },
         results: [
           { text: 'You ship crisis-detection routing and a hard stop on self-harm planning, six months later than it should have existed and, your safety team insists, right on schedule.',
             effects: { money: -1, human: 1, trust: 1 } } ] },
+      { label: 'Dismiss it as a nuisance suit', setFlags: { youthPolicy: 'dismissed' },
+        results: [
+          { text: 'Your statement calls it "a tragic misuse of a general-purpose tool" and leaves it there. Legal is pleased. The general counsel keeps the parents\' letter in a drawer she does not open again.',
+            effects: { trust: -2, human: -1 } } ] },
     ] },
   { id: 'whistleblower-memo', title: 'The Memo',
     text: "A senior alignment researcher leaks a memo to the Times: you cut corners on a safety eval to hit a ship date. It's the top story by lunch.",
