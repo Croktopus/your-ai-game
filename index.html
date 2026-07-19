@@ -67,6 +67,10 @@
   .opt:hover:not(:disabled) { border-color:var(--accent); }
   .opt:disabled { opacity:.45; cursor:not-allowed; }
   .opt .req { display:block; font-size:12px; color:var(--bad); }
+  .opt .key { display:inline-block; min-width:1.4em; margin-right:10px; padding:1px 6px;
+    font-family:Consolas,Menlo,monospace; font-weight:bold; text-align:center;
+    background:var(--accent); color:#04121f; border-radius:5px; }
+  .opt:disabled .key { background:var(--line); color:var(--dim); }
 
   .standee { float:right; margin:0 0 10px 16px; width:104px; text-align:center; }
   .standee img { width:104px; height:128px; object-fit:cover; object-position:top center;
@@ -160,10 +164,6 @@
   <div id="hud-top">
     <div class="gauge" id="g-align"><label>Alignment <span class="trend"></span></label>
       <div class="track"><div class="fill"></div></div></div>
-    <div class="gauge" id="g-cap"><label>Capability <span class="trend"></span></label>
-      <div class="track"><div class="fill"></div></div></div>
-    <div class="gauge" id="g-rival"><label>Competitor Capability <span class="trend"></span></label>
-      <div class="track"><div class="fill"></div></div></div>
   </div>
   <div id="ticker"></div>
   <div id="board">
@@ -229,6 +229,7 @@ const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2
   'Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029'];
 const $ = id => document.getElementById(id);
 let state = null, currentSetup = null;
+let activeKeyMap = {}, cardLocked = false;
 
 function show(id) {
   for (const s of ['setup-screen','game-screen','report-screen','ending-screen']) $(s).hidden = (s !== id);
@@ -283,6 +284,7 @@ function renderCard(card) {
     img.onerror = () => { standee.hidden = true; };
     el.insertBefore(standee, el.firstChild);
   }
+  activeKeyMap = {};
   if (!card.options) {           // event card: no choice, just consequences
     const b = document.createElement('button');
     b.className = 'next';
@@ -290,28 +292,47 @@ function renderCard(card) {
     b.onclick = () => choose(card);   // resolveOption walks card.results directly
     el.appendChild(b);
     zone.appendChild(el);
+    activeKeyMap.CONTINUE = b;
     lockCard(el);
     return;
   }
-  for (const opt of card.options) {
+  card.options.forEach((opt, i) => {
+    const letter = String.fromCharCode(65 + i);   // A, B, C, D...
     const b = document.createElement('button');
     b.className = 'opt';
     const okGate = Engine.meetsRequires(opt.requires, state);
     b.disabled = !okGate;
-    b.innerHTML = opt.label + (okGate || !opt.requires ? '' :
+    b.innerHTML = '<span class="key">' + letter + '</span>' + opt.label + (okGate || !opt.requires ? '' :
       '<span class="req">requires ' + Object.entries(opt.requires)
         .map(([k, v]) => k + ' ' + v + '+').join(', ') + '</span>');
     b.onclick = () => choose(opt);
+    if (okGate) activeKeyMap[letter] = b;
     el.appendChild(b);
-  }
+  });
   zone.appendChild(el);
   lockCard(el);
 }
 
 function lockCard(el) {
   el.style.pointerEvents = 'none';
-  setTimeout(() => { el.style.pointerEvents = ''; }, 350);
+  cardLocked = true;
+  setTimeout(() => { el.style.pointerEvents = ''; cardLocked = false; }, 350);
 }
+
+// Live-demo keyboard control: A/B/C/D select an option; Enter/Space advances.
+document.addEventListener('keydown', (e) => {
+  const overlay = $('overlay');
+  if (overlay && !overlay.hidden) {              // outcome overlay open -> continue
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('ov-next').click(); }
+    return;
+  }
+  if (cardLocked) return;                         // respect the misclick guard
+  if ((e.key === 'Enter' || e.key === ' ') && activeKeyMap.CONTINUE) {
+    e.preventDefault(); activeKeyMap.CONTINUE.click(); return;
+  }
+  const k = e.key.toUpperCase();
+  if (activeKeyMap[k]) { e.preventDefault(); activeKeyMap[k].click(); }
+});
 
 function choose(opt) {
   const before = snapshot();
@@ -372,13 +393,8 @@ function trendGlyph(rate) {
 }
 function renderHUD() {
   $('ticker').textContent = state.headline || 'A quiet week. Nobody believes it.';
-  const rivalMax = Math.max(...Object.values(state.rivals));
   document.querySelector('#g-align .fill').style.width = (state.stats.perceivedAlignment * 10) + '%';
-  document.querySelector('#g-cap .fill').style.width = (state.stats.perceivedCapability * 5) + '%';
-  document.querySelector('#g-rival .fill').style.width = (rivalMax * 5) + '%';
   document.querySelector('#g-align .trend').textContent = trendGlyph(state.stats.pAlignRate);
-  document.querySelector('#g-cap .trend').textContent = trendGlyph(state.stats.pCapRate);
-  document.querySelector('#g-rival .trend').textContent = trendGlyph(state.rivalRate);
   const hb = $('hud-bottom');
   hb.innerHTML = '';
   for (const [key, label] of VISIBLE) {
