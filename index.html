@@ -117,6 +117,23 @@
                     border-radius:4px; overflow:hidden; }
   .rev-row .fill { height:100%; }
 
+  #bib { width:min(560px,100%); text-align:left; background:var(--panel);
+         border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:24px; }
+  #bib h3 { font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim);
+            margin-bottom:10px; }
+  #bib .start-links { list-style:none; margin-bottom:4px; }
+  #bib .start-links li { margin-bottom:8px; }
+  #bib .start-links a { color:var(--accent); font-size:14px; }
+  #bib .start-links .desc { color:var(--dim); font-size:12px; display:block; }
+  #bib details { margin-top:14px; }
+  #bib summary { cursor:pointer; color:var(--dim); font-size:13px; }
+  #bib .lede { font-size:13px; color:var(--dim); margin:8px 0 10px; }
+  #bib .src-list { list-style:none; max-height:220px; overflow-y:auto; margin-top:8px;
+    padding-right:4px; border-top:1px solid var(--line); padding-top:8px; }
+  #bib .src-list li { font-size:12px; padding:4px 0; border-bottom:1px dotted var(--line); }
+  #bib .src-list a { color:var(--text); }
+  #bib .src-list .meta { color:var(--dim); }
+
   /* annual report interstitial */
   #report-panel { width:min(560px,100%); text-align:left; background:var(--panel);
                   border:1px solid var(--line); border-radius:10px; padding:24px; margin-bottom:24px; }
@@ -184,6 +201,7 @@
   <h1 id="ending-title"></h1>
   <p id="ending-text"></p>
   <div id="reveal"></div>
+  <div id="bib"></div>
   <div>
     <button class="next" id="again-new">New run</button>
     <button class="next" id="again-same" style="background:var(--panel);color:var(--text);
@@ -405,7 +423,39 @@ function showEnding() {
     '<p style="margin-top:12px;font-size:13px;color:var(--dim)">' +
     (s.trueCapability > rivalMax ? 'You won the race.' : 'You lost the race.') + ' ' +
     (s.trueAlignment >= 5 ? 'What you built was aligned.' : 'What you built was not aligned.') + '</p>';
+  renderBibliography();
   show('ending-screen');
+}
+
+// ---- end-screen bibliography: curated starting points + the per-card SOURCES registry ----
+const START_LINKS = [
+  { title: 'AI 2040 — the world this game is based on', url: 'https://ai-2040.com/' },
+  { title: '80,000 Hours — technical AI safety upskilling', url: 'https://80000hours.org/2025/06/technical-ai-safety-upskilling-resources/' },
+  { title: 'AI Safety Resources', url: 'https://ai-safety-resources.com/' },
+  { title: 'aisafety.info — Intro to AI safety', url: 'https://aisafety.info/questions/NM3Q/Intro-to-AI-safety' },
+];
+function renderBibliography() {
+  const panel = $('bib');
+  const startHtml = '<h3>Where to actually start</h3><ul class="start-links">' +
+    START_LINKS.map(l => '<li><a href="' + l.url + '" target="_blank" rel="noopener">' + l.title + '</a></li>').join('') +
+    '</ul>';
+  let srcHtml = '';
+  if (typeof SOURCES === 'object' && SOURCES) {
+    const seen = new Set();
+    const rows = [];
+    for (const key of Object.keys(SOURCES)) {
+      const s = SOURCES[key];
+      if (!s || !s.title || !s.url || seen.has(s.url)) continue;
+      seen.add(s.url);
+      rows.push('<li><a href="' + s.url + '" target="_blank" rel="noopener">' + s.title + '</a>' +
+        (s.publisher ? ' <span class="meta">— ' + s.publisher + (s.year ? ', ' + s.year : '') + '</span>' : '') +
+        '</li>');
+    }
+    srcHtml = '<details><summary>Sources & evidence (' + rows.length + ')</summary>' +
+      '<p class="lede">Every dilemma here is grounded in real events, policy, and research.</p>' +
+      '<ul class="src-list">' + rows.join('') + '</ul></details>';
+  }
+  panel.innerHTML = startHtml + srcHtml;
 }
 function revRow(label, val, max, color) {
   return '<div class="rev-row"><span>' + label + '</span><div class="track">' +
