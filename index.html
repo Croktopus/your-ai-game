@@ -24,7 +24,8 @@
                   border-radius:5px; overflow:hidden; margin-top:4px; }
   .gauge .fill { height:100%; background:var(--accent); transition:width .6s; }
   #g-align .fill { background:var(--good); }
-  .gauge .off { font-size:10px; color:var(--dim); font-style:italic; }
+  #g-rival .fill { background:var(--bad); }
+  .gauge .trend { font-family:Consolas,Menlo,monospace; margin-left:6px; }
 
   #ticker { padding:6px 20px; font-size:13px; color:var(--gold); background:#1c1408;
             border-bottom:1px solid var(--line); white-space:nowrap; overflow:hidden;
@@ -110,9 +111,11 @@
 
 <div id="game-screen" class="screen" hidden>
   <div id="hud-top">
-    <div class="gauge" id="g-align"><label>Perceived Alignment <span class="off">— PR figure</span></label>
+    <div class="gauge" id="g-align"><label>Alignment <span class="trend"></span></label>
       <div class="track"><div class="fill"></div></div></div>
-    <div class="gauge" id="g-cap"><label>Perceived Capability <span class="off">— analyst est.</span></label>
+    <div class="gauge" id="g-cap"><label>Capability <span class="trend"></span></label>
+      <div class="track"><div class="fill"></div></div></div>
+    <div class="gauge" id="g-rival"><label>Competitor Capability <span class="trend"></span></label>
       <div class="track"><div class="fill"></div></div></div>
   </div>
   <div id="ticker"></div>
@@ -149,7 +152,7 @@
 <script src="endings.js"></script>
 <script src="reports.js"></script>
 <script>
-const CONTENT = { scenarios: SCENARIOS, tripwires: TRIPWIRES, headlines: HEADLINES, endgame: ENDGAME };
+const CONTENT = { scenarios: SCENARIOS, funding: FUNDING, tripwires: TRIPWIRES, headlines: HEADLINES, endgame: ENDGAME };
 const VISIBLE = [['money','Money'],['compute','Compute'],['trust','Trust'],
   ['political','Political'],['human','Talent'],['data','Data']];
 const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027',
@@ -275,10 +278,23 @@ function showReport(report) {
 $('report-continue').onclick = () => { show('game-screen'); nextTurn(); };
 
 // ---- HUD ----
+// Trend glyph for a rate stat: ↑↑ fast / ↑ slow / → flat / ↓ decaying (alignment rates
+// only — capability & rival rates are floored at 0 and never show ↓).
+function trendGlyph(rate) {
+  if (rate > 1) return '↑↑';
+  if (rate > 0) return '↑';
+  if (rate < 0) return '↓';
+  return '→';
+}
 function renderHUD() {
   $('ticker').textContent = state.headline || 'A quiet week. Nobody believes it.';
+  const rivalMax = Math.max(...Object.values(state.rivals));
   document.querySelector('#g-align .fill').style.width = (state.stats.perceivedAlignment * 10) + '%';
   document.querySelector('#g-cap .fill').style.width = (state.stats.perceivedCapability * 5) + '%';
+  document.querySelector('#g-rival .fill').style.width = (rivalMax * 5) + '%';
+  document.querySelector('#g-align .trend').textContent = trendGlyph(state.stats.pAlignRate);
+  document.querySelector('#g-cap .trend').textContent = trendGlyph(state.stats.pCapRate);
+  document.querySelector('#g-rival .trend').textContent = trendGlyph(state.rivalRate);
   const hb = $('hud-bottom');
   hb.innerHTML = '';
   for (const [key, label] of VISIBLE) {
