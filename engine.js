@@ -8,6 +8,21 @@ const Engine = (() => {
     perceivedAlignment: [0, 10], trueAlignment: [0, 10],
     perceivedCapability: [0, 20], trueCapability: [0, 20],
   };
+  // Rate stats: capability & alignment (yours + rivals') advance every turn by these
+  // rather than being poked directly by cards. See docs/design/capability-alignment-rate-model.md.
+  // Capability rates and rivalRate are floored at 0 — capability only ever climbs.
+  // Alignment rates may go negative — alignment can decay under neglect.
+  const RATE_BOUNDS = {
+    pCapRate: [0, 3], tCapRate: [0, 3],
+    pAlignRate: [-3, 3], tAlignRate: [-3, 3],
+    rivalRate: [0, 3],
+  };
+  const RATE_DEFAULTS = { pCapRate: 1, tCapRate: 1, pAlignRate: 0, tAlignRate: 0, rivalRate: 1.5 };
+
+  function clampRate(key, value) {
+    const [lo, hi] = RATE_BOUNDS[key];
+    return Math.min(hi, Math.max(lo, value));
+  }
 
   function mulberry32(a) {
     return function () {
@@ -35,10 +50,18 @@ const Engine = (() => {
 
   function createRun(setup, seed, content) {
     const rng = mulberry32(seed);
+    const stats = Object.assign({}, setup.stats);
+    for (const key of Object.keys(RATE_DEFAULTS))
+      if (key !== 'rivalRate')
+        stats[key] = clampRate(key, stats[key] !== undefined ? stats[key] : RATE_DEFAULTS[key]);
+    const rivalRate = clampRate('rivalRate',
+      setup.stats.rivalRate !== undefined ? setup.stats.rivalRate : RATE_DEFAULTS.rivalRate);
+    delete stats.rivalRate; // lives on state.rivalRate, not state.stats
     return {
       seed, rng, turn: 0,
-      stats: Object.assign({}, setup.stats),
+      stats,
       rivals: { pam: 4, lonnie: 3 },
+      rivalRate,
       queue: buildQueue(content.scenarios, rng),
       firedTripwires: [], ending: null, headline: null,
     };
@@ -73,13 +96,34 @@ const Engine = (() => {
     for (const [key, delta] of Object.entries(effects)) {
       if (key === 'rivals') {
         for (const r of Object.keys(state.rivals))
-          state.rivals[r] = Math.max(0, state.rivals[r] + delta);
+          state.rivals[r] = Math.max(0, Math.min(20, state.rivals[r] + delta));
+        continue;
+      }
+      if (key === 'rivalRate') {
+        state.rivalRate = clampRate('rivalRate', state.rivalRate + delta);
+        continue;
+      }
+      if (RATE_BOUNDS[key]) {
+        state.stats[key] = clampRate(key, state.stats[key] + delta);
         continue;
       }
       if (!CLAMPS[key]) { console.warn('unknown effect key: ' + key); continue; }
       const [lo, hi] = CLAMPS[key];
       state.stats[key] = Math.min(hi, Math.max(lo, state.stats[key] + delta));
     }
+  }
+
+  // Advance the trajectories: capability & alignment (yours + rivals') ride their rates
+  // every turn. No rng consumed — deterministic given the accumulated rates.
+  function advanceTrajectories(state) {
+    const s = state.stats;
+    const clampBar = (key, v) => { const [lo, hi] = CLAMPS[key]; return Math.min(hi, Math.max(lo, v)); };
+    s.perceivedCapability = clampBar('perceivedCapability', s.perceivedCapability + s.pCapRate);
+    s.trueCapability = clampBar('trueCapability', s.trueCapability + s.tCapRate);
+    s.perceivedAlignment = clampBar('perceivedAlignment', s.perceivedAlignment + s.pAlignRate);
+    s.trueAlignment = clampBar('trueAlignment', s.trueAlignment + s.tAlignRate);
+    for (const r of Object.keys(state.rivals))
+      state.rivals[r] = Math.max(0, Math.min(20, state.rivals[r] + state.rivalRate));
   }
 
   function fireResult(state, r) {
@@ -107,11 +151,17 @@ const Engine = (() => {
   function beginTurn(state, content) {
     state.turn++;
     applyEffects(state, { money: -BURN });
-    for (const r of Object.keys(state.rivals))
-      state.rivals[r] += 1 + (state.rng() < 0.1 ? 1 : 0);
+    advanceTrajectories(state);
     state.headline = pickHeadline(state, content.headlines);
     if (state.stats.money <= 0) { state.ending = 'bankrupt'; return null; }
     if (state.turn === TURNS) return content.endgame || null;
+    // Q1 of each year (turns 1/5/9/13): guaranteed funding card, deck untouched.
+    // Wins over tripwires, same priority as the endgame winning at turn 16.
+    if (state.turn % 4 === 1 && content.funding) {
+      const year = yearForTurn(state.turn);
+      const fc = content.funding.find(f => f.year === year);
+      if (fc) return fc;
+    }
     const tw = content.tripwires.find(t =>
       !state.firedTripwires.includes(t.id) && checkCondition(t.trigger, state));
     if (tw) { state.firedTripwires.push(tw.id); return tw; }
@@ -140,6 +190,6 @@ const Engine = (() => {
     return 'race-to-bottom';
   }
 
-  return { TURNS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
+  return { TURNS, mulberry32, yearForTurn, shuffle, buildQueue, createRun, getStat, checkCondition, meetsRequires, applyEffects, advanceTrajectories, clampRate, resolveOption, pickHeadline, beginTurn, isOver, judgeEnding };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
