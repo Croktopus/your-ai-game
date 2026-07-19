@@ -349,6 +349,27 @@ const STAT_KEYS = ['money','compute','trust','political','human','data',
   'pCapRate','tCapRate','pAlignRate','tAlignRate'];
 const VISIBLE_KEYS = ['money','compute','trust','political','human','data'];
 
+const CONFIDENCE_LABELS = ['observed', 'inferred', 'speculative'];
+
+if (CONTENT) t('evidence validation: every card has a premise, every option (or event card) has evidence', () => {
+  const SOURCES_MAP = CONTENT.SOURCES;
+  ok(SOURCES_MAP && Object.keys(SOURCES_MAP).length > 0, 'SOURCES registry must be non-empty');
+  const all = [...CONTENT.SCENARIOS, ...(CONTENT.FUNDING || []), ...CONTENT.TRIPWIRES, CONTENT.ENDGAME];
+  const checkEvidence = (holder, where) => {
+    ok(Array.isArray(holder.evidence) && holder.evidence.length > 0, where + ': needs a non-empty evidence source list');
+    for (const id of holder.evidence) ok(SOURCES_MAP[id], where + ': evidence id "' + id + '" not in SOURCES');
+    ok(CONFIDENCE_LABELS.includes(holder.confidence), where + ': confidence must be one of ' + CONFIDENCE_LABELS.join('/') + ', got ' + holder.confidence);
+    ok(typeof holder.note === 'string' && holder.note.length > 0, where + ': needs a non-empty rationale note');
+  };
+  for (const s of all) {
+    if (!s) continue;
+    ok(Array.isArray(s.premise) && s.premise.length > 0, s.id + ': needs a non-empty premise() source list');
+    for (const id of s.premise) ok(SOURCES_MAP[id], s.id + ': premise id "' + id + '" not in SOURCES');
+    if (s.options) for (const o of s.options) checkEvidence(o, s.id + ' "' + o.label + '"');
+    else checkEvidence(s, s.id + ' (event card)');
+  }
+});
+
 if (CONTENT && ENDINGS_MAP) t('content validation', () => {
   // FUNDING cards are guaranteed (not deck content) but share the same card shape and
   // effect-key vocabulary, so they get the same structural checks as scenarios/tripwires.
