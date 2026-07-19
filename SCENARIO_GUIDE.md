@@ -2,6 +2,52 @@
 
 Copy the template block from `scenarios.js`, fill it in, append it to `SCENARIOS`. That's it.
 
+## Evidence — every card cites something
+
+Every card carries `...premise('SOURCE_ID', 'SOURCE_ID2', ...)` — 2+ ids naming what real-world
+premise the card's dilemma is built on. Every *option* carries
+`...evidence(['SOURCE_ID', ...], confidence, note)`; an option-less event card (see below)
+carries `...evidence(...)` on the card itself, since it has no option to hang it on.
+
+`premise` and `evidence` are plain helper functions defined near the top of `scenarios.js`,
+spread onto the card/option object literal:
+
+```js
+{ id: 'my-card', year: 2027, title: 'The Thing',
+  text: '...',
+  ...premise('ANTHROPIC_RSP', 'CA_SB53'),
+  options: [
+    { label: 'Do the safe thing',
+      ...evidence(['ANTHROPIC_RSP', 'CA_SB53'], 'observed',
+        'Published frontier safety frameworks and California law both require exactly this kind of disclosure.'),
+      results: [ ... ] },
+  ] },
+```
+
+`confidence` is always one of three honest labels:
+
+- **`'observed'`** — the underlying event or mechanism is documented (a law passed, a lab
+  shipped the feature, a paper demonstrated the technique).
+- **`'inferred'`** — a documented real-world mechanism is applied to this fictional lab's
+  situation.
+- **`'speculative'`** — plausible, but no empirical frequency exists. Most catastrophic
+  branches (bioweapon, ASI claims, a deceptive model, nationalization) belong here, honestly,
+  on purpose. So does any chance-branch probability (`chance: 0.35`) or effect magnitude — a
+  citation supports the *direction* of a consequence, never the exact number.
+
+`SOURCE_ID`s must resolve in the `SOURCES` registry (also near the top of `scenarios.js`,
+~50 real, verifiable citations — labs' own safety publications, regulator actions, peer-reviewed
+papers, policy proposals). Don't invent a new source to make a card look better-cited; if
+nothing in `SOURCES` fits, pick the closest general source and be honest that the option is
+`'speculative'`. Only add a new `SOURCES` entry when the premise is genuinely uncovered and the
+citation is real and checkable (a real URL, not a plausible-sounding one).
+
+`tests.js` enforces this mechanically: every card's `premise` and every option's `evidence`
+source ids must resolve in `SOURCES`, `confidence` must be one of the three labels, and every
+option (or event card) needs a non-empty rationale `note`. See
+`docs/research/scenario-evidence-dossier.md` for the full card-by-card citation map, organized
+by year, with an explicit call-out of which cards lean `'speculative'` and why.
+
 ## The stats you can touch (`effects`)
 
 Two layers. **Resources** are discrete currencies a card moves directly. **Capability &
