@@ -111,7 +111,7 @@ most "slow/speed the competition" cards should use `rivalRate` instead.
 5. **`chance`** is 0–1 and rolls only after `if` passes. Order results most-specific first.
 6. **`requires` gates** show up as locked-but-visible buttons — visible stats only (`money`, `compute`, `trust`, `political`, `human`, `data`). Never gate on hidden stats.
 7. **`gameOver: 'ending-id'`** ends the run instantly. Add your ending to `endings.js` (`'ending-id': { title, text }`).
-8. **Tone:** darkly satirical, grounded, second person, present tense. Cast: Mario (you), Pam (OpenAI-alike), Lonnie (X-AI-alike), Helen (safety), Ronald Pumps (gov), Frances (CSO).
+8. **Tone:** darkly satirical, grounded, second person, present tense. Cast: Mario (you, CEO of **Misanthropic** — the player's company; its model is **Claudia**), Pam (Leader of ClosedAI), Lonnie (Leader of C_AI), Helen (Head of Safety), Ronald Pumps (AI Czar), Frances (Chief Science Officer).
 9. **Years:** `year: 2026|2027|2028|2029` places a card in that year (4 quarterly turns each — minus Q1, which is the reserved funding turn, so 3 deck turns for 2026/2027/2028 and 2 for 2029). Stakes should escalate by year. OMIT `year` entirely to make the card a wildcard — usable in any year, drawn to fill whichever year runs short of dedicated cards. A card can never appear twice in the same run (drawn cards are removed from the deck).
 10. **Event cards:** omit `options` and give the scenario its own `results` — the player just presses Continue. Perfect for consequences of hidden-stat decay (see `deployment-incident`). A scenario with exactly one option is a forced choice; also fine.
 
