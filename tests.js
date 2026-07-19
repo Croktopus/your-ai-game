@@ -499,12 +499,18 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
   const content = { scenarios: CONTENT.SCENARIOS, funding: CONTENT.FUNDING, tripwires: CONTENT.TRIPWIRES,
                     headlines: CONTENT.HEADLINES, endgame: CONTENT.ENDGAME };
   const tally = {};
+  // Early-ASI finish (engine.js asiReached, see docs/design/board-life-framing.md): beginTurn
+  // returns null with state.ending already set to one of the three plan-d-* ids -- distinct
+  // from bankruptcy (also a null return) and from picking Plan D at the literal turn-16
+  // "Choose a Path" endgame (which returns a real card and resolves through resolveOption).
+  const ASI_IDS = new Set(['plan-d-needle', 'plan-d-yours', 'plan-d-theirs']);
+  let asiEarlyCount = 0;
   for (const setup of SETS) for (let seed = 1; seed <= 50; seed++) {
     const st = E.createRun(setup, seed, content);
-    let guard = 0;
+    let guard = 0, asiEarly = false;
     while (!E.isOver(st) && guard++ < 20) {
       const card = E.beginTurn(st, content);
-      if (!card) break;
+      if (!card) { if (ASI_IDS.has(st.ending)) asiEarly = true; break; }
       if (!card.options) { E.resolveOption(st, card); continue; } // event card: no options, walk its own results
       const open = card.options.filter(o => E.meetsRequires(o.requires, st));
       ok(open.length > 0, card.id + ': all options gated at ' + JSON.stringify(st.stats));
@@ -514,6 +520,7 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
     const end = E.judgeEnding(st);
     ok(ENDINGS_MAP[end], 'unknown ending: ' + end);
     tally[end] = (tally[end] || 0) + 1;
+    if (asiEarly) asiEarlyCount++;
   }
   console.log('  ending distribution:', JSON.stringify(tally));
 
@@ -521,17 +528,26 @@ if (CONTENT && ENDINGS_MAP) t('150 random full runs all terminate in known endin
   const DEATH_IDS = new Set(['bankrupt','riots','ousted','shutdown','corruption',
     'espionage-scandal','incident','coverup-collapse',
     'bioweapon-extinction','summit-leak','neuro-lawsuit','nationalized']);
-  let deaths = 0, trueWins = 0;
+  let deaths = 0, needleWins = 0;
   const planEndingsSeen = new Set();
   for (const [id, count] of Object.entries(tally)) {
     ok(count / TOTAL <= 0.5, 'no single ending should exceed 50% of runs: ' + id + ' = ' + count);
     if (DEATH_IDS.has(id)) deaths += count;
-    if (id === 'plan-d-needle' || id === 'plan-a-nick-of-time') trueWins += count;
+    if (id === 'plan-d-needle') needleWins += count;
     if (id.indexOf('plan-') === 0) planEndingsSeen.add(id);
   }
-  const deathPct = deaths / TOTAL, winPct = trueWins / TOTAL;
-  ok(deathPct >= 0.20 && deathPct <= 0.45, 'deaths should be 20-45% of runs, got ' + (deathPct * 100).toFixed(1) + '%');
-  ok(winPct >= 0.01 && winPct <= 0.08, 'true wins (plan-d-needle + plan-a-nick-of-time) should be 1-8%, got ' + (winPct * 100).toFixed(1) + '%');
+  const asiEarlyPct = asiEarlyCount / TOTAL;
+  const deathPct = deaths / TOTAL;
+  const needlePct = needleWins / TOTAL;
+  // "Reached the 2029 endgame instead" of racing to ASI: everything that's neither an early-ASI
+  // finish nor a mid-run death -- includes runs that actually resolve turn 16's Choose a Path,
+  // and the handful of pre-existing non-death judged exits (e.g. shut-it-down, signed-the-treaty)
+  // that likewise opt the lab out of the ASI race before 2029.
+  const endgamePct = (TOTAL - asiEarlyCount - deaths) / TOTAL;
+  ok(asiEarlyPct >= 0.40 && asiEarlyPct <= 0.65, 'early-ASI finishes should be 40-65% of runs, got ' + (asiEarlyPct * 100).toFixed(1) + '%');
+  ok(endgamePct >= 0.30 && endgamePct <= 0.55, 'reaching the 2029 endgame instead should be 30-55% of runs, got ' + (endgamePct * 100).toFixed(1) + '%');
+  ok(needlePct >= 0.01 && needlePct <= 0.08, 'plan-d-needle (aligned ASI win) should be 1-8% of runs, got ' + (needlePct * 100).toFixed(1) + '%');
+  ok(deathPct >= 0.10 && deathPct <= 0.30, 'deaths should be 10-30% of runs, got ' + (deathPct * 100).toFixed(1) + '%');
   ok(planEndingsSeen.size >= 4, 'expected at least 4 distinct plan endings, got ' + planEndingsSeen.size + ': ' + [...planEndingsSeen].join(','));
 });
 

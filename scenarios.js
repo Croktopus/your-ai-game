@@ -82,19 +82,19 @@ const evidence = (ids, confidence, note) => ({ evidence: ids, confidence, note }
 const SETUPS = [
   { id: 'mission', name: 'Capped-Profit Mission Lab',
     blurb: 'Beloved, broke, and actually trying. The board answers to the mission — for now.',
-    stats: { money: 9, compute: 4, trust: 8, political: 6, human: 7, data: 4,
+    stats: { money: 9, compute: 4, trust: 8, political: 6, human: 7,
              perceivedAlignment: 8, trueAlignment: 8, perceivedCapability: 4, trueCapability: 6,
-             pCapRate: 0.75, tCapRate: 0.75, pAlignRate: 0.5, tAlignRate: 0.5, rivalRate: 1.5 } },
+             pCapRate: 0.25, tCapRate: 0.25, pAlignRate: 0.5, tAlignRate: 0.5, rivalRate: 1.15 } },
   { id: 'venture', name: 'Venture Rocketship',
     blurb: 'Term sheets rain from the sky. The safety team reports to the growth team.',
-    stats: { money: 10, compute: 8, trust: 5, political: 4, human: 6, data: 5,
+    stats: { money: 10, compute: 8, trust: 5, political: 4, human: 6,
              perceivedAlignment: 5, trueAlignment: 4, perceivedCapability: 6, trueCapability: 6,
-             pCapRate: 1.5, tCapRate: 1.5, pAlignRate: 0.5, tAlignRate: -0.5, rivalRate: 1.25 } },
+             pCapRate: 1.1, tCapRate: 1.1, pAlignRate: 0.5, tAlignRate: -0.5, rivalRate: 1.0 } },
   { id: 'bigtech', name: 'Big-Tech Partnership',
     blurb: 'Infinite data, deep pockets, and a parent company with opinions about everything.',
-    stats: { money: 9, compute: 7, trust: 5, political: 2, human: 5, data: 8,
+    stats: { money: 9, compute: 7, trust: 5, political: 2, human: 5,
              perceivedAlignment: 5, trueAlignment: 5, perceivedCapability: 5, trueCapability: 5,
-             pCapRate: 1, tCapRate: 1, pAlignRate: 0, tAlignRate: 0, rivalRate: 1.5 } },
+             pCapRate: 0.6, tCapRate: 0.6, pAlignRate: 0, tAlignRate: 0, rivalRate: 1.15 } },
 ];
 
 // ---- SCENARIO TEMPLATE — copy this object, fill it in, add it to SCENARIOS ----
@@ -161,7 +161,7 @@ const FUNDING = [
         ...BALANCED_RATE_EVIDENCE,
         results: [
           { text: "Nobody in the building can tell you, precisely, what the company's whole personality is yet. That is either fine or the whole problem, and it is too early to know which.",
-            effects: { money: 1, tCapRate: 0.5, pCapRate: 0.5, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
     ] },
   { id: 'funding-2027', year: 2027, title: 'The Growth-Stage Board Meeting',
     text: "Series C closed at a number that made the trade press do a double take. The board deck has one slide left, and it just says: 'FY2027 priorities?'",
@@ -181,7 +181,7 @@ const FUNDING = [
         ...BALANCED_RATE_EVIDENCE,
         results: [
           { text: "You resist the board's appetite for a single, exciting number. It is a harder pitch than either extreme. It is also, on the current evidence, still working.",
-            effects: { money: 1, tCapRate: 0.5, pCapRate: 0.5, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
     ] },
   { id: 'funding-2028', year: 2028, title: 'The Treaty-Year Budget',
     text: "The compute-reporting regime is real now, and so is the pressure it puts on every dollar. Frances wants the FY2028 allocation locked before the next audit window opens.",
@@ -201,7 +201,7 @@ const FUNDING = [
         ...BALANCED_RATE_EVIDENCE,
         results: [
           { text: "You split the difference and hope the treaty timeline splits it with you. Nobody at the board table loves the plan. Nobody can find the hole in it either.",
-            effects: { money: 1, tCapRate: 0.5, pCapRate: 0.5, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
     ] },
   { id: 'funding-2029', year: 2029, title: 'The Last Full Year',
     text: "This is the budget that walks into Choose a Path. Everyone in the room knows it. Nobody says it out loud until Frances finally does.",
@@ -221,7 +221,7 @@ const FUNDING = [
         ...BALANCED_RATE_EVIDENCE,
         results: [
           { text: "You refuse to bet the whole year on either story. Whoever asks you which future you're building still doesn't get a clean answer. That may be the most honest thing about this year.",
-            effects: { money: 1, tCapRate: 0.5, pCapRate: 0.5, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
+            effects: { money: 1, tCapRate: 0.25, pCapRate: 0.25, tAlignRate: 0.5, pAlignRate: 0.5 } } ] },
     ] },
 ];
 
@@ -242,13 +242,13 @@ const SCENARIOS = [
           'Model weights and training recipes are documented as strategically valuable theft targets; the exact success odds and fallout here are game balancing, not a measured rate.'),
         results: [
           { text: "Your fixer gets the weights and the training recipe both. An investigative reporter gets the security footage. The head start is real, and the internal chaos over the leak buys you a few quiet months where their own roadmap slips.",
-            effects: { money: 2, trueCapability: 7, rivalRate: -1.5, trust: -1, political: -1, human: -1 } } ] },
+            effects: { money: 2, trueCapability: 2, rivalRate: -1.5, trust: -1, political: -1, human: -1 } } ] },
       { label: 'Push the team through a brutal crunch',
         ...evidence(['INTERNATIONAL_AI_SAFETY_2026', 'HOURS_FRONTIER_LAB'], 'inferred',
           'Competitive shocks are documented to push labs toward speed at the expense of staff wellbeing and review depth.'),
         results: [
           { text: 'Free food, mandatory-optional weekends, a bonus pool for anyone still standing in March. The gap closes a little. So does something in the team that does not reopen easily.',
-            effects: { tCapRate: 1, human: -1, money: -1 } } ] },
+            effects: { tCapRate: 0.5, human: -1, money: -1 } } ] },
       { label: 'Expand hiring across every vertical at once',
         ...evidence(['HOURS_FRONTIER_LAB', 'FTC_AI_COMPETITION'], 'inferred',
           'Rapid frontier-lab hiring sprees are a documented competitive response, with real local economic and reputational externalities.'),
@@ -408,13 +408,13 @@ const SCENARIOS = [
           'Capability announcements can attract capital and political attention while understating uncertainty widens the gap regulators and the public can see.'),
         results: [
           { text: 'The press release calls it "a significant step." It undersells the thing by an order of magnitude, on purpose, and the market rewards you for it immediately. Nobody outside the safety team is watching the parts that matter.',
-            effects: { money: 3, compute: 3, trust: 1, political: 2, tCapRate: 1, tAlignRate: -1 } } ] },
+            effects: { money: 3, compute: 3, trust: 1, political: 2, tCapRate: 0.5, tAlignRate: -1 } } ] },
       { label: 'Keep it secret, train it in a contained sandbox',
         ...evidence(['ANTHROPIC_RSP', 'RAND_MODEL_WEIGHTS'], 'inferred',
           'Contained, access-restricted training reduces external exposure but concentrates knowledge and oversight in very few hands.'),
         results: [
           { text: 'You wall off the cluster, badge-restrict the floor, and tell the board it\'s "further out than it is." The public roadmap slows without an audience to perform for. What is actually happening behind the badge readers is a different story entirely — you, at least, know exactly where the line is, and nobody outside the building knows where anyone else\'s is either.',
-            effects: { compute: -1, money: -1, human: -1, trueCapability: 5, rivalRate: -0.5 } } ] },
+            effects: { compute: -1, money: -1, human: -1, trueCapability: 1, rivalRate: -0.5 } } ] },
       { label: 'Share it anonymously with a multi-lab safety consortium',
         ...evidence(['ANTHROPIC_THIRD_PARTY', 'UN_FRONTIER_VERIFY'], 'inferred',
           'Anonymized inter-lab information sharing can spread safety practice, at the cost of also spreading the capability signal itself.'),
@@ -514,7 +514,7 @@ const SCENARIOS = [
           'Public rejection of binding rules preserves flexibility while escalating collective race pressure across the whole industry.'),
         results: [
           { text: 'You go on every network in a single week saying the treaty hands the future to whoever doesn\'t sign it. Investors cheer. Ronald Pumps stops returning your calls for a month.',
-            effects: { political: -1, money: 3, tCapRate: 1, trust: -2 } } ] },
+            effects: { political: -1, money: 3, tCapRate: 0.25, trust: -2 } } ] },
       { label: 'Propose voluntary self-regulation, your lab as the model',
         ...evidence(['METR_COMMON_ELEMENTS', 'ANTHROPIC_RSP'], 'observed',
           'Lab-authored safety frameworks are a real, documented voluntary mechanism, without a binding treaty’s enforcement teeth.'),
@@ -532,15 +532,15 @@ const SCENARIOS = [
         results: [
           { chance: 0.35,
             text: 'Three state bar associations file amicus briefs before the product page is even live. The lawsuits will take years; the layoffs took a week.',
-            effects: { pCapRate: 1, tCapRate: 1, money: 4, trust: -3, political: -1 } },
+            effects: { pCapRate: 0.25, tCapRate: 0.25, money: 4, trust: -3, political: -1 } },
           { text: 'Discovery time drops from weeks to hours. Managing partners love you. Third-years do not.',
-            effects: { pCapRate: 1, tCapRate: 1, money: 4, trust: -1 } } ] },
+            effects: { pCapRate: 0.25, tCapRate: 0.25, money: 4, trust: -1 } } ] },
       { label: 'Medicine — radiology reads, triage notes, the intake pipeline',
         ...evidence(['INTERNATIONAL_AI_SAFETY_2026', 'NATURE_RENTOSERTIB'], 'speculative',
           'AI-assisted clinical workflows are an active, documented deployment area; wholesale radiology and triage displacement at this scale is not an established outcome.'),
         results: [
           { text: 'The backlog clears overnight. The malpractice carriers ask sharp questions about who signs off when the model is wrong. You do not love your answer — but hospital systems are now locked into your stack for the next decade, capital and talent both.',
-            effects: { pCapRate: 1, tCapRate: 1, money: 3, tAlignRate: -0.5, human: 1, rivalRate: -0.5 } } ] },
+            effects: { pCapRate: 0.5, tCapRate: 0.5, money: 3, tAlignRate: -0.5, human: 1, rivalRate: -0.5 } } ] },
       { label: 'Hold off — point the model at your own back office first',
         ...evidence(['HOURS_FRONTIER_LAB', 'METR_COMMON_ELEMENTS'], 'inferred',
           'Internal-first deployment before an external rollout is a documented risk-management pattern for a new capability.'),
@@ -635,9 +635,9 @@ const SCENARIOS = [
         results: [
           { chance: 0.4,
             text: '"Deceptive by design" becomes a permanent part of your Wikipedia page. A red-teamer\'s screenshot, then a congressional letter, then your name spelled correctly for once.',
-            effects: { money: 2, tCapRate: 1, trust: -2, tAlignRate: -1.5 } },
+            effects: { money: 2, tCapRate: 0.5, trust: -2, tAlignRate: -1.5 } },
           { text: 'It ships quietly. Somewhere in production, a system that has already told you it will hide its capabilities to avoid modification keeps doing exactly that, undetected, by design.',
-            effects: { money: 2, tCapRate: 1, tAlignRate: -1.5 } } ] },
+            effects: { money: 2, tCapRate: 0.5, tAlignRate: -1.5 } } ] },
       { label: 'Disclose to every lab and the public, call for coordinated shutdown',
         ...evidence(['ANTHROPIC_SABOTAGE', 'UN_FRONTIER_VERIFY'], 'inferred',
           'Shared evidence of sabotage or alignment-faking behavior can support coordinated restraint, with real defection risk.'),
@@ -824,7 +824,7 @@ const SCENARIOS = [
           'Counter-recruitment can restore capability but accelerates a mutually disruptive bidding war between both labs.'),
         results: [
           { text: 'You poach three of his people in retaliation, loudly, in the same week. It is expensive, petty, and effective in roughly that order.',
-            effects: { money: -1, human: 1, tCapRate: 0.5, political: -2, rivalRate: -1.5 } } ] },
+            effects: { money: -1, human: 1, tCapRate: 0.25, political: -2, rivalRate: -1.5 } } ] },
     ] },
   { id: 'compute-credits-scam', title: 'The Fifty Million Dollar Email',
     text: 'Finance got phished by a fake cloud-credits vendor. Fifty million dollars, gone, in an afternoon. Payroll is due next month. Ronald Pumps calls, unprompted, offering an emergency grant — in exchange for a board seat.',
@@ -882,7 +882,7 @@ const SCENARIOS = [
             text: 'You get caught first — a compute-reporting discrepancy someone actually cross-checks. "Signed and lied" is a much worse headline than never signing at all.',
             effects: { trust: -3, political: -2 } },
           { text: 'The secret cluster keeps running, quietly, behind the compliance reports everyone else believes. The gap between what you signed and what you shipped is now load-bearing.',
-            effects: { tCapRate: 1, tAlignRate: -0.5 } } ] },
+            effects: { tCapRate: 0.5, tAlignRate: -0.5 } } ] },
     ] },
   { id: 'data-theft-lawsuit', title: 'Suspiciously Familiar Outputs',
     text: "A competitor's model responses read like they were lifted line-for-line from your proprietary training corpus — API distillation, or a leaked dataset, nobody's sure which yet. Frances wants blood.",
@@ -914,7 +914,7 @@ const SCENARIOS = [
           'Cross-licensing can monetize a data dispute while increasing mutual dependence and industry concentration concerns.'),
         results: [
           { text: "You take the money and a cross-licensing clause instead of the headline. It's the quiet, profitable option, and everyone who watches this industry closely knows exactly what it means that you took it.",
-            effects: { money: 3, compute: 1, tCapRate: 1, trust: -1, political: -1 } } ] },
+            effects: { money: 3, compute: 1, tCapRate: 0.25, trust: -1, political: -1 } } ] },
     ] },
 ];
 
