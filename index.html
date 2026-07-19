@@ -91,6 +91,7 @@
                 background:var(--panel); border-top:1px solid var(--line); }
   .res { padding:5px 12px; border:1px solid var(--line); border-radius:8px; font-size:13px; }
   .res b { font-size:16px; margin-left:6px; }
+  .res-icon { image-rendering:pixelated; image-rendering:crisp-edges; vertical-align:-3px; margin-right:2px; }
   .res.crit b { color:var(--bad); }
   #stamp { margin-left:auto; color:var(--dim); font-size:12px; }
 
@@ -136,8 +137,6 @@
      you and the end of 2029 — when someone has to choose America's path. The race does not wait.
      Choose how your company was built:</p>
   <div id="setup-cards"></div>
-  <p class="sub" style="margin-top:24px">seed: <input id="seed-input" class="mono" size="8"
-     style="background:var(--bg);color:var(--text);border:1px solid var(--line);padding:2px 6px"></p>
 </div>
 
 <div id="game-screen" class="screen" hidden>
@@ -200,7 +199,14 @@
 <script>
 const CONTENT = { scenarios: SCENARIOS, funding: FUNDING, tripwires: TRIPWIRES, headlines: HEADLINES, endgame: ENDGAME };
 const VISIBLE = [['money','Money'],['compute','Compute'],['trust','Trust'],
-  ['political','Political'],['human','Talent'],['data','Data']];
+  ['political','Political'],['human','Talent']];
+const RES_ICONS = {
+  money: '<svg class="res-icon" viewBox="0 0 16 16" width="15" height="15"><rect x="4" y="3" width="8" height="1" fill="var(--gold)"/><rect x="3" y="4" width="1" height="8" fill="var(--gold)"/><rect x="12" y="4" width="1" height="8" fill="var(--gold)"/><rect x="4" y="12" width="8" height="1" fill="var(--gold)"/><rect x="4" y="4" width="8" height="8" fill="#463506"/><rect x="7" y="6" width="2" height="1" fill="var(--gold)"/><rect x="6" y="7" width="1" height="1" fill="var(--gold)"/><rect x="9" y="7" width="1" height="1" fill="var(--gold)"/><rect x="7" y="8" width="2" height="1" fill="var(--gold)"/><rect x="7" y="9" width="2" height="1" fill="var(--gold)"/></svg>',
+  compute: '<svg class="res-icon" viewBox="0 0 16 16" width="15" height="15"><rect x="4" y="4" width="8" height="8" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="6" y="6" width="4" height="4" fill="var(--accent)"/><rect x="1" y="6" width="2" height="1" fill="var(--accent)"/><rect x="1" y="9" width="2" height="1" fill="var(--accent)"/><rect x="13" y="6" width="2" height="1" fill="var(--accent)"/><rect x="13" y="9" width="2" height="1" fill="var(--accent)"/><rect x="6" y="1" width="1" height="2" fill="var(--accent)"/><rect x="9" y="1" width="1" height="2" fill="var(--accent)"/><rect x="6" y="13" width="1" height="2" fill="var(--accent)"/><rect x="9" y="13" width="1" height="2" fill="var(--accent)"/></svg>',
+  trust: '<svg class="res-icon" viewBox="0 0 16 16" width="15" height="15"><path d="M8 13 L3 8 A2.5 2.5 0 0 1 6.5 4.5 L8 6 L9.5 4.5 A2.5 2.5 0 0 1 13 8 Z" fill="var(--good)"/></svg>',
+  political: '<svg class="res-icon" viewBox="0 0 16 16" width="15" height="15"><rect x="7" y="2" width="2" height="2" fill="var(--dim)"/><rect x="3" y="6" width="10" height="1" fill="var(--dim)"/><rect x="3" y="7" width="1" height="5" fill="var(--dim)"/><rect x="5" y="7" width="1" height="5" fill="var(--dim)"/><rect x="7" y="7" width="1" height="5" fill="var(--dim)"/><rect x="9" y="7" width="1" height="5" fill="var(--dim)"/><rect x="11" y="7" width="1" height="5" fill="var(--dim)"/><rect x="12" y="7" width="1" height="5" fill="var(--dim)"/><rect x="2" y="12" width="11" height="1" fill="var(--dim)"/></svg>',
+  human: '<svg class="res-icon" viewBox="0 0 16 16" width="15" height="15"><rect x="6" y="2" width="4" height="4" fill="var(--text)"/><rect x="5" y="7" width="6" height="5" fill="var(--text)"/><rect x="4" y="12" width="2" height="2" fill="var(--text)"/><rect x="10" y="12" width="2" height="2" fill="var(--text)"/></svg>',
+};
 const DATES = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027',
   'Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029'];
 const $ = id => document.getElementById(id);
@@ -211,14 +217,16 @@ function show(id) {
 }
 
 // ---- setup screen ----
+function generateSeed() {
+  return Math.floor(Math.random() * 900000) + 100000;
+}
 function initSetup() {
-  $('seed-input').value = String(Math.floor(Math.random() * 90000) + 10000);
   $('setup-cards').innerHTML = '';
   for (const su of SETUPS) {
     const b = document.createElement('button');
     b.className = 'setup-card';
     b.innerHTML = '<h3>' + su.name + '</h3><p>' + su.blurb + '</p>';
-    b.onclick = () => startRun(su, parseInt($('seed-input').value, 10) || 1);
+    b.onclick = () => startRun(su, generateSeed());
     $('setup-cards').appendChild(b);
   }
 }
@@ -359,13 +367,13 @@ function renderHUD() {
     const v = state.stats[key];
     const el = document.createElement('span');
     el.className = 'res' + (v <= 1 ? ' crit' : '');
-    el.innerHTML = label + '<b class="mono">' + v + '</b>';
+    el.innerHTML = (RES_ICONS[key] || '') + label + '<b class="mono">' + v + '</b>';
     hb.appendChild(el);
   }
   const st = document.createElement('span');
   st.id = 'stamp'; st.className = 'mono';
   st.textContent = DATES[Math.min(state.turn, Engine.TURNS) - 1] + ' · turn ' + state.turn +
-    '/' + Engine.TURNS + ' · seed ' + state.seed;
+    '/' + Engine.TURNS;
   hb.appendChild(st);
   renderBoard();
 }
